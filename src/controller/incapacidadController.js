@@ -460,22 +460,44 @@ export const IncapacidadController = {
         });
       }
 
+      // Si quien sube no es el dueño, mover archivo a la carpeta del dueño
+      let nombreArchivo = req.file.filename;
+      let archivoActual = req.file.path;
+      
+      if (incapacidad.usuario_id !== usuarioId) {
+        // Crear carpeta del dueño si no existe
+        const carpetaDueno = path.join(process.cwd(), 'src', 'uploads', `user_${incapacidad.usuario_id}`);
+        if (!fs.existsSync(carpetaDueno)) {
+          fs.mkdirSync(carpetaDueno, { recursive: true });
+        }
+
+        // Generar nuevo nombre de archivo en carpeta del dueño
+        const sanitizedName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+        nombreArchivo = `${Date.now()}-user${incapacidad.usuario_id}-${sanitizedName}`;
+        const nuevaRuta = path.join(carpetaDueno, nombreArchivo);
+
+        // Mover archivo
+        fs.renameSync(archivoActual, nuevaRuta);
+        archivoActual = nuevaRuta;
+      }
+
       // Actualizar documento en la incapacidad
-      const nombreArchivo = req.file.filename;
       const db = getDatabase();
       await db.run(
         'UPDATE incapacidades SET documento = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [nombreArchivo, id]
       );
 
-      // Crear notificación para GH si el usuario es colaborador
-      if (usuarioRol !== 'gh') {
+      // Crear notificación
+      // Si GH/Conta sube el documento, notificar al dueño de la incapacidad
+      // Si el dueño sube su propio documento, no crear notificación (evita notificarse a sí mismo)
+      if (['gh', 'conta'].includes(usuarioRol) && incapacidad.usuario_id !== usuarioId) {
         await NotificacionModel.crear({
           usuario_id: incapacidad.usuario_id,
           tipo: 'incapacidad_documento_subido',
-          mensaje: `Se ha subido un nuevo documento para la incapacidad #${id}`,
-          referencia_tipo: 'incapacidad',
-          referencia_id: id
+          titulo: 'Documento actualizado',
+          mensaje: `El equipo de RRHH ha actualizado el documento de tu incapacidad #${id}`,
+          incapacidad_id: id
         });
       }
 
