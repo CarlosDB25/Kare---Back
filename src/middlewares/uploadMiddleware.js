@@ -11,16 +11,32 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = join(__dirname, '..', 'uploads');
     
-    // Crear directorio si no existe
+    // Crear directorio base si no existe
     if (!existsSync(uploadPath)) {
       mkdirSync(uploadPath, { recursive: true });
     }
-    
-    cb(null, uploadPath);
+
+    // Si hay usuario autenticado, crear subdirectorio por usuario
+    if (req.user && req.user.id) {
+      const userUploadPath = join(uploadPath, `user_${req.user.id}`);
+      if (!existsSync(userUploadPath)) {
+        mkdirSync(userUploadPath, { recursive: true });
+      }
+      cb(null, userUploadPath);
+    } else {
+      // Si no hay usuario (ej: durante validación antes de crear), usar carpeta temporal
+      const tempPath = join(uploadPath, 'temp');
+      if (!existsSync(tempPath)) {
+        mkdirSync(tempPath, { recursive: true });
+      }
+      cb(null, tempPath);
+    }
   },
   filename: (req, file, cb) => {
-    // Generar nombre único: timestamp-nombreoriginal
-    const uniqueName = `${Date.now()}-${file.originalname}`;
+    // Generar nombre único: timestamp-userid-nombreoriginal
+    const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const userId = req.user ? req.user.id : 'temp';
+    const uniqueName = `${Date.now()}-user${userId}-${sanitizedName}`;
     cb(null, uniqueName);
   }
 });

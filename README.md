@@ -115,6 +115,8 @@ POST   /api/incapacidades                    # Crear (con validaciones automáti
 GET    /api/incapacidades                    # Listar (filtrado por rol)
 GET    /api/incapacidades/:id                # Obtener por ID
 PUT    /api/incapacidades/:id/estado         # Cambiar estado (GH/Conta)
+POST   /api/incapacidades/:id/documento      # Subir/actualizar documento
+GET    /api/incapacidades/:id/documento      # Descargar documento
 POST   /api/incapacidades/validar-documento  # OCR - Validar documento PDF/imagen
 ```
 

@@ -2,6 +2,7 @@ import { IncapacidadModel } from '../models/Incapacidad.js';
 import HistorialEstadoModel from '../models/HistorialEstado.js';
 import NotificacionModel from '../models/Notificacion.js';
 import { UsuarioModel } from '../models/Usuario.js';
+import { getDatabase } from '../db/database.js';
 import { extraerTextoDocumento } from '../services/ocrService.js';
 import { analizarDocumento, calcularSimilitudNombres } from '../services/documentAnalyzer.js';
 import { validarIncapacidad, validarTransicionEstado, calcularDias } from '../services/validationService.js';
@@ -96,7 +97,6 @@ export const IncapacidadController = {
    */
   async obtener(req, res) {
     try {
-      // TODO: Implementar obtención de incapacidades
       const { rol, id: usuarioId } = req.user;
 
       let incapacidades;
@@ -119,6 +119,49 @@ export const IncapacidadController = {
       res.status(500).json({
         success: false,
         message: 'Error al obtener incapacidades',
+        data: null
+      });
+    }
+  },
+
+  /**
+   * Obtener incapacidad por ID
+   * GET /api/incapacidades/:id
+   */
+  async obtenerPorId(req, res) {
+    try {
+      const { id } = req.params;
+      const { rol, id: usuarioId } = req.user;
+
+      const incapacidad = await IncapacidadModel.obtenerPorId(id);
+
+      if (!incapacidad) {
+        return res.status(404).json({
+          success: false,
+          message: 'Incapacidad no encontrada',
+          data: null
+        });
+      }
+
+      // Verificar permisos: solo el dueño o GH/Conta pueden ver
+      if (incapacidad.usuario_id !== usuarioId && !['gh', 'conta'].includes(rol)) {
+        return res.status(403).json({
+          success: false,
+          message: 'No tienes permiso para ver esta incapacidad',
+          data: null
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Incapacidad obtenida',
+        data: incapacidad
+      });
+    } catch (error) {
+      console.error('Error en obtener incapacidad:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener incapacidad',
         data: null
       });
     }
@@ -365,6 +408,194 @@ export const IncapacidadController = {
       res.status(500).json({
         success: false,
         message: 'Error procesando documento: ' + error.message,
+        data: null
+      });
+    }
+  },
+
+  /**
+   * Subir documento adicional a una incapacidad existente
+   * POST /api/incapacidades/:id/documento
+   */
+  async subirDocumento(req, res) {
+    try {
+      const { id } = req.params;
+      const usuarioId = req.user.id;
+      const usuarioRol = req.user.rol;
+
+      // Verificar que se subió un archivo
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'No se proporcionó ningún documento',
+          data: null
+        });
+      }
+
+      // Obtener incapacidad
+      const incapacidad = await IncapacidadModel.obtenerPorId(id);
+
+      if (!incapacidad) {
+        // Eliminar archivo subido
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        return res.status(404).json({
+          success: false,
+          message: 'Incapacidad no encontrada',
+          data: null
+        });
+      }
+
+      // Verificar permisos: solo el dueño o GH/Conta pueden subir documentos
+      if (incapacidad.usuario_id !== usuarioId && !['gh', 'conta'].includes(usuarioRol)) {
+        // Eliminar archivo subido
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        return res.status(403).json({
+          success: false,
+          message: 'No tienes permiso para subir documentos a esta incapacidad',
+          data: null
+        });
+      }
+
+      // Actualizar documento en la incapacidad
+      const nombreArchivo = req.file.filename;
+      const db = getDatabase();
+      await db.run(
+        'UPDATE incapacidades SET documento = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [nombreArchivo, id]
+      );
+
+      // Crear notificación para GH si el usuario es colaborador
+      if (usuarioRol !== 'gh') {
+        await NotificacionModel.crear({
+          usuario_id: incapacidad.usuario_id,
+          tipo: 'incapacidad_documento_subido',
+          mensaje: `Se ha subido un nuevo documento para la incapacidad #${id}`,
+          referencia_tipo: 'incapacidad',
+          referencia_id: id
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Documento subido exitosamente',
+        data: {
+          incapacidad_id: id,
+          documento: nombreArchivo,
+          nombre_original: req.file.originalname,
+          tamaño: req.file.size,
+          tipo: req.file.mimetype
+        }
+      });
+
+    } catch (error) {
+      console.error('Error subiendo documento:', error);
+      
+      // Limpiar archivo si existe
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+
+      res.status(500).json({
+        success: false,
+        message: 'Error al subir documento: ' + error.message,
+        data: null
+      });
+    }
+  },
+
+  /**
+   * Obtener documento de una incapacidad
+   * GET /api/incapacidades/:id/documento
+   */
+  async obtenerDocumento(req, res) {
+    try {
+      const { id } = req.params;
+      const usuarioId = req.user.id;
+      const usuarioRol = req.user.rol;
+
+      // Obtener incapacidad
+      const incapacidad = await IncapacidadModel.obtenerPorId(id);
+
+      if (!incapacidad) {
+        return res.status(404).json({
+          success: false,
+          message: 'Incapacidad no encontrada',
+          data: null
+        });
+      }
+
+      // Verificar que hay documento
+      if (!incapacidad.documento) {
+        return res.status(404).json({
+          success: false,
+          message: 'Esta incapacidad no tiene documento adjunto',
+          data: null
+        });
+      }
+
+      // Verificar permisos: solo el dueño o GH/Conta pueden ver documentos
+      if (incapacidad.usuario_id !== usuarioId && !['gh', 'conta'].includes(usuarioRol)) {
+        return res.status(403).json({
+          success: false,
+          message: 'No tienes permiso para ver este documento',
+          data: null
+        });
+      }
+
+      // Construir ruta del archivo
+      // Primero intentar en la carpeta del usuario
+      let rutaArchivo = path.join(process.cwd(), 'src', 'uploads', `user_${incapacidad.usuario_id}`, incapacidad.documento);
+      
+      // Si no existe, buscar en la carpeta raíz de uploads (archivos antiguos)
+      if (!fs.existsSync(rutaArchivo)) {
+        rutaArchivo = path.join(process.cwd(), 'src', 'uploads', incapacidad.documento);
+      }
+
+      // Si aún no existe, buscar en temp
+      if (!fs.existsSync(rutaArchivo)) {
+        rutaArchivo = path.join(process.cwd(), 'src', 'uploads', 'temp', incapacidad.documento);
+      }
+
+      // Verificar que el archivo existe
+      if (!fs.existsSync(rutaArchivo)) {
+        return res.status(404).json({
+          success: false,
+          message: 'El archivo del documento no se encontró en el servidor',
+          data: null
+        });
+      }
+
+      // Obtener información del archivo
+      const stats = fs.statSync(rutaArchivo);
+      const extension = path.extname(incapacidad.documento).toLowerCase();
+
+      // Determinar tipo MIME
+      let mimeType = 'application/octet-stream';
+      if (extension === '.pdf') {
+        mimeType = 'application/pdf';
+      } else if (['.jpg', '.jpeg'].includes(extension)) {
+        mimeType = 'image/jpeg';
+      } else if (extension === '.png') {
+        mimeType = 'image/png';
+      }
+
+      // Enviar archivo
+      res.setHeader('Content-Type', mimeType);
+      res.setHeader('Content-Disposition', `inline; filename="${incapacidad.documento}"`);
+      res.setHeader('Content-Length', stats.size);
+
+      const stream = fs.createReadStream(rutaArchivo);
+      stream.pipe(res);
+
+    } catch (error) {
+      console.error('Error obteniendo documento:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener documento: ' + error.message,
         data: null
       });
     }

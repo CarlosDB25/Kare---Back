@@ -47,4 +47,28 @@ router.post(
   IncapacidadController.validarDocumento
 );
 
+// GET /api/incapacidades/:id - Obtener incapacidad por ID
+router.get(
+  '/:id',
+  authMiddleware,
+  IncapacidadController.obtenerPorId
+);
+
+// POST /api/incapacidades/:id/documento - Subir documento a incapacidad existente
+// El dueño de la incapacidad o GH/Conta pueden subir
+router.post(
+  '/:id/documento',
+  authMiddleware,
+  upload.single('documento'),
+  IncapacidadController.subirDocumento
+);
+
+// GET /api/incapacidades/:id/documento - Obtener/descargar documento de incapacidad
+// El dueño de la incapacidad o GH/Conta pueden descargar
+router.get(
+  '/:id/documento',
+  authMiddleware,
+  IncapacidadController.obtenerDocumento
+);
+
 export default router;
