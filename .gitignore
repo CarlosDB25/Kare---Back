@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads (archivos subidos por usuarios)
+src/uploads/*
+!src/uploads/.gitkeep
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentacion personal (no incluir en repo)
+docs/GUIA_FRONTEND_VISUAL.md
+docs/CONSEJOS_FRONTEND.md
+docs/LIMPIEZA_TOOLS.md
+docs/RESUMEN_MEJORAS.md
+docs/LIMPIEZA_Y_CONSOLIDACION.md
+docs/TRABAJO_FINAL_COMPLETADO.md
+docs/RESUMEN_PROGRESO.md
+GUIA_FRONTEND_VISUAL.md
+CONSEJOS_FRONTEND.md
+LIMPIEZA_TOOLS.md
+RESUMEN_MEJORAS.md
+LIMPIEZA_Y_CONSOLIDACION.md
+TRABAJO_FINAL_COMPLETADO.md
+RESUMEN_PROGRESO.md
+
+# Herramientas de desarrollo personal
+tools/
