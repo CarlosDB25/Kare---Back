@@ -1,8 +1,8 @@
 # 🧪 GUÍA COMPLETA DE TESTS - SISTEMA KARE
 
-**Versión:** 3.0.0  
+**Versión:** 3.1.0  
 **Fecha:** Noviembre 2025  
-**Tests totales:** 122 (100% pasando ✅)
+**Tests totales:** 131 (100% pasando ✅)
 
 ---
 
@@ -11,7 +11,7 @@
 1. [Introducción](#introducción)
 2. [Configuración de Tests](#configuración-de-tests)
 3. [Categoría 1: Autenticación y Seguridad (20 tests)](#categoría-1-autenticación-y-seguridad)
-4. [Categoría 2: Validaciones de Incapacidades (24 tests)](#categoría-2-validaciones-de-incapacidades)
+4. [Categoría 2: Validaciones de Incapacidades (31 tests - incluye 6 de gestión de documentos)](#categoría-2-validaciones-de-incapacidades)
 5. [Categoría 3: Gestión de Estados (10 tests)](#categoría-3-gestión-de-estados)
 6. [Categoría 4: Notificaciones (10 tests)](#categoría-4-notificaciones)
 7. [Categoría 5: Conciliaciones (8 tests)](#categoría-5-conciliaciones)
@@ -60,7 +60,7 @@ tools/
 | Categoría | Tests | Estado |
 |-----------|-------|--------|
 | **1. Autenticación y Seguridad** | 20 | ✅ 100% |
-| **2. Validaciones de Incapacidades** | 24 | ✅ 100% |
+| **2. Validaciones de Incapacidades** | 31 | ✅ 100% |
 | **3. Gestión de Estados** | 10 | ✅ 100% |
 | **4. Notificaciones** | 10 | ✅ 100% |
 | **5. Conciliaciones** | 8 | ✅ 100% |
@@ -69,7 +69,7 @@ tools/
 | **8. Edge Cases y Seguridad** | 15 | ✅ 100% |
 | **9. Rendimiento** | 8 | ✅ 100% |
 | **10. Integración E2E** | 9 | ✅ 100% |
-| **TOTAL** | **122** | **✅ 100%** |
+| **TOTAL** | **131** | **✅ 100%** |
 
 ---
 
@@ -677,6 +677,190 @@ if (datos.tipo && !tiposValidos.includes(datos.tipo)) {
   errores.push(`Tipo de incapacidad inválido. Tipos válidos: ${tiposValidos.join(', ')}`);
 }
 ```
+
+---
+
+### Test 2.26-2.31: Gestión de Documentos - Casos Reales (6 tests)
+
+**Propósito:** Validar upload/download de archivos reales (imágenes y PDFs)
+
+#### Test 2.26: Subir Imagen de Certificado Médico
+
+**Endpoint:** `POST /api/incapacidades/:id/documento`
+
+**Request:** FormData con archivo JPG
+```javascript
+const formData = new FormData();
+formData.append('documento', fs.createReadStream('test-incapacidad.jpg'));
+```
+
+**Headers:**
+```http
+Content-Type: multipart/form-data
+Authorization: Bearer {tokens.colaborador}
+```
+
+**Respuesta esperada:**
+```json
+{
+  "success": true,
+  "message": "Documento actualizado exitosamente",
+  "data": {
+    "id": 1,
+    "documento": "1732138745123-user4-test-incapacidad.jpg",
+    "tipo": "EPS",
+    "estado": "reportada"
+  }
+}
+```
+
+**Validaciones:**
+- ✅ Status: 200
+- ✅ Archivo guardado en `uploads/user_4/`
+- ✅ Nombre formato: `{timestamp}-user{id}-{nombre}.jpg`
+
+---
+
+#### Test 2.27: Descargar Documento Subido
+
+**Endpoint:** `GET /api/incapacidades/:id/documento`
+
+**Respuesta esperada:**
+```
+Status: 200
+Content-Type: image/jpeg
+Content-Disposition: inline; filename="..."
+
+[BINARY DATA]
+```
+
+**Validaciones:**
+- ✅ Status: 200
+- ✅ Content-Type correcto (image/jpeg)
+- ✅ Retorna datos binarios del archivo
+
+---
+
+#### Test 2.28: GH Actualiza con PDF de Mejor Calidad
+
+**Endpoint:** `POST /api/incapacidades/:id/documento`
+
+**Request:** FormData con archivo PDF
+```javascript
+const formData = new FormData();
+formData.append('documento', fs.createReadStream('test-certificado.pdf'));
+```
+
+**Headers:**
+```http
+Content-Type: multipart/form-data
+Authorization: Bearer {tokens.gh}
+```
+
+**Respuesta esperada:**
+```json
+{
+  "success": true,
+  "message": "Documento actualizado exitosamente",
+  "data": {
+    "id": 1,
+    "documento": "1732139000456-user4-test-certificado.pdf"
+  }
+}
+```
+
+**Validaciones:**
+- ✅ Status: 200
+- ✅ Documento anterior reemplazado
+- ✅ GH puede actualizar documentos de otros usuarios
+- ✅ Usuario recibe notificación
+
+---
+
+#### Test 2.29: Descargar PDF Actualizado
+
+**Endpoint:** `GET /api/incapacidades/:id/documento`
+
+**Respuesta esperada:**
+```
+Status: 200
+Content-Type: application/pdf
+```
+
+**Validaciones:**
+- ✅ Status: 200
+- ✅ Content-Type: application/pdf
+- ✅ Retorna PDF actualizado (no la imagen anterior)
+
+---
+
+#### Test 2.30: Rechaza Subir Documento a Incapacidad Ajena (403)
+
+**Endpoint:** `POST /api/incapacidades/:id/documento`
+
+**Escenario:** Colaborador intenta subir documento a incapacidad de GH
+
+**Respuesta esperada:**
+```json
+{
+  "success": false,
+  "message": "No tienes permiso para modificar esta incapacidad",
+  "data": null
+}
+```
+
+**Validaciones:**
+- ✅ Status: 403 Forbidden
+- ✅ Mensaje de error correcto
+- ✅ Permisos funcionan correctamente
+
+---
+
+#### Test 2.31: Retorna 404 cuando No Hay Documento
+
+**Endpoint:** `GET /api/incapacidades/:id/documento`
+
+**Escenario:** Incapacidad creada sin documento
+
+**Respuesta esperada:**
+```json
+{
+  "success": false,
+  "message": "No se encontró documento para esta incapacidad",
+  "data": null
+}
+```
+
+**Validaciones:**
+- ✅ Status: 404 Not Found
+- ✅ Mensaje claro
+- ✅ No retorna error 500
+
+**🎯 Casos de Uso Reales Cubiertos:**
+
+1. **📸 Colaborador sube foto de certificado médico (móvil)**
+   - Formato: JPG/PNG
+   - Tamaño: < 5MB
+   - Ubicación: `uploads/user_{id}/`
+
+2. **📄 GH actualiza con PDF escaneado de alta calidad**
+   - Formato: PDF
+   - Reemplaza imagen anterior
+   - Notifica al colaborador
+
+3. **🔒 Control de permisos por propietario**
+   - Solo dueño o GH/Contador pueden subir/ver
+   - 403 Forbidden para usuarios sin permiso
+
+4. **🗂️ Organización automática por usuario**
+   - Carpetas `user_1/`, `user_2/`, etc.
+   - Nombres sanitizados y únicos
+   - Retrocompatibilidad con archivos antiguos
+
+**📦 Archivos de Prueba Utilizados:**
+
+- `tools/test-files/test-incapacidad.jpg` - Imagen JPEG 1x1 (mínima válida)
+- `tools/test-files/test-certificado.pdf` - PDF simple con datos de incapacidad
 
 ---
 

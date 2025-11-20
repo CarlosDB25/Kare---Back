@@ -1042,6 +1042,366 @@ console.log('Datos extraídos:', data.data);
 
 ---
 
+### 2.6 Subir/Actualizar Documento de Incapacidad
+
+**Endpoint:** `POST /api/incapacidades/:id/documento`
+
+**URL Completa:**
+```
+http://localhost:3000/api/incapacidades/:id/documento
+```
+
+**Método:** `POST`
+
+**Headers:**
+```http
+Content-Type: multipart/form-data
+Authorization: Bearer {token}
+```
+
+**Body (Form-Data):**
+```
+documento: [archivo PDF o imagen]
+```
+
+**Roles Permitidos:** 
+- Propietario de la incapacidad
+- Gestor de RRHH
+- Contador/a
+
+**Comportamiento:**
+- Reemplaza el documento anterior si existe
+- Organiza automáticamente en carpeta `uploads/user_{id}/`
+- Genera nombre único: `{timestamp}-user{userId}-{nombre}.ext`
+- Notifica al usuario cuando GH/Contador sube documento
+- Formatos soportados: PDF, PNG, JPG, JPEG
+
+**Ejemplo con curl (PDF):**
+```bash
+curl -X POST http://localhost:3000/api/incapacidades/5/documento \
+  -H "Authorization: Bearer {token}" \
+  -F "documento=@C:/Users/usuario/certificado_medico.pdf"
+```
+
+**Ejemplo con JavaScript (Imagen):**
+```javascript
+// Subir imagen de certificado médico
+const inputFile = document.querySelector('#fileInput');
+const file = inputFile.files[0]; // test-incapacidad.jpg
+
+const formData = new FormData();
+formData.append('documento', file);
+
+const response = await fetch('http://localhost:3000/api/incapacidades/5/documento', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  },
+  body: formData
+});
+
+const data = await response.json();
+console.log('Documento subido:', data.data.documento);
+// Salida: "1732138745123-user4-certificado_medico.jpg"
+```
+
+**Ejemplo React (Componente completo):**
+```jsx
+function SubirDocumento({ incapacidadId }) {
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async () => {
+    if (!file) return;
+    
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('documento', file);
+
+    try {
+      const res = await fetch(`/api/incapacidades/${incapacidadId}/documento`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert('Documento subido exitosamente');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div>
+      <input 
+        type="file" 
+        accept=".pdf,.jpg,.jpeg,.png"
+        onChange={(e) => setFile(e.target.files[0])}
+      />
+      <button onClick={handleUpload} disabled={uploading}>
+        {uploading ? 'Subiendo...' : 'Subir Documento'}
+      </button>
+    </div>
+  );
+}
+```
+
+**Respuesta Exitosa (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Documento actualizado exitosamente",
+  "data": {
+    "id": 5,
+    "documento": "1732138745123-user4-certificado_medico.pdf",
+    "tipo": "EPS",
+    "fecha_inicio": "2026-01-20",
+    "fecha_fin": "2026-01-25",
+    "diagnostico": "Gripe viral aguda",
+    "estado": "reportada"
+  }
+}
+```
+
+**Respuesta Error (403 Forbidden):**
+```json
+{
+  "success": false,
+  "message": "No tienes permiso para modificar esta incapacidad",
+  "data": null
+}
+```
+
+**Respuesta Error (404 Not Found):**
+```json
+{
+  "success": false,
+  "message": "Incapacidad no encontrada",
+  "data": null
+}
+```
+
+**Códigos de Estado:**
+- `200` - Documento actualizado exitosamente
+- `400` - No se proporcionó archivo o formato inválido
+- `401` - No autenticado
+- `403` - Sin permiso (no es propietario ni GH/Contador)
+- `404` - Incapacidad no encontrada
+- `500` - Error del servidor
+
+**Tamaño Máximo:** 5 MB
+
+**🔐 Seguridad:**
+- Solo el propietario o usuarios con rol GH/Contador pueden subir
+- Los archivos se organizan en carpetas separadas por usuario
+- Nombres sanitizados (caracteres especiales → `_`)
+- Validación de tipo de archivo
+
+**💡 Escenarios de Uso:**
+
+**Caso 1: Colaborador sube certificado médico inicial**
+```bash
+# Usuario sube certificado después de crear incapacidad
+curl -X POST http://localhost:3000/api/incapacidades/10/documento \
+  -H "Authorization: Bearer {tokenColaborador}" \
+  -F "documento=@/ruta/foto_certificado.jpg"
+
+# Resultado: Archivo guardado en uploads/user_4/1732138745123-user4-foto_certificado.jpg
+```
+
+**Caso 2: GH actualiza con versión escaneada en PDF**
+```bash
+# Gestor de RRHH reemplaza imagen por PDF de mejor calidad
+curl -X POST http://localhost:3000/api/incapacidades/10/documento \
+  -H "Authorization: Bearer {tokenGH}" \
+  -F "documento=@/ruta/certificado_escaneado.pdf"
+
+# Resultado: Documento actualizado, usuario recibe notificación
+# Archivo guardado en uploads/user_4/1732139000456-user4-certificado_escaneado.pdf
+```
+
+---
+
+### 2.7 Descargar Documento de Incapacidad
+
+**Endpoint:** `GET /api/incapacidades/:id/documento`
+
+**URL Completa:**
+```
+http://localhost:3000/api/incapacidades/:id/documento
+```
+
+**Método:** `GET`
+
+**Headers:**
+```http
+Authorization: Bearer {token}
+```
+
+**Roles Permitidos:**
+- Propietario de la incapacidad
+- Gestor de RRHH
+- Contador/a
+
+**Comportamiento:**
+- Busca el archivo en 3 ubicaciones (compatibilidad):
+  1. `uploads/user_{id}/`
+  2. `uploads/` (raíz)
+  3. `uploads/temp/`
+- Retorna el archivo para descarga/visualización
+- Content-Type automático según extensión (PDF, imagen)
+
+**Ejemplo con curl:**
+```bash
+curl -X GET http://localhost:3000/api/incapacidades/5/documento \
+  -H "Authorization: Bearer {token}" \
+  -o certificado_descargado.pdf
+```
+
+**Ejemplo con JavaScript (Descargar):**
+```javascript
+async function descargarDocumento(incapacidadId) {
+  const response = await fetch(`http://localhost:3000/api/incapacidades/${incapacidadId}/documento`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (response.ok) {
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `incapacidad_${incapacidadId}.pdf`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+}
+
+descargarDocumento(5);
+```
+
+**Ejemplo React (Vista previa de imagen):**
+```jsx
+function VistaDocumento({ incapacidadId }) {
+  const [docUrl, setDocUrl] = useState(null);
+
+  useEffect(() => {
+    const cargarDocumento = async () => {
+      const res = await fetch(`/api/incapacidades/${incapacidadId}/documento`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        setDocUrl(url);
+      }
+    };
+
+    cargarDocumento();
+    return () => docUrl && URL.revokeObjectURL(docUrl);
+  }, [incapacidadId]);
+
+  return docUrl ? (
+    <div>
+      <h3>Certificado Médico</h3>
+      <img src={docUrl} alt="Documento" style={{ maxWidth: '100%' }} />
+    </div>
+  ) : (
+    <p>Cargando documento...</p>
+  );
+}
+```
+
+**Respuesta Exitosa (200 OK):**
+```
+Content-Type: application/pdf (o image/jpeg, image/png)
+Content-Disposition: inline; filename="1732138745123-user4-certificado.pdf"
+
+[CONTENIDO BINARIO DEL ARCHIVO]
+```
+
+**Respuesta Error (403 Forbidden):**
+```json
+{
+  "success": false,
+  "message": "No tienes permiso para ver esta incapacidad",
+  "data": null
+}
+```
+
+**Respuesta Error (404 Not Found):**
+```json
+{
+  "success": false,
+  "message": "No se encontró documento para esta incapacidad",
+  "data": null
+}
+```
+
+**Códigos de Estado:**
+- `200` - Documento descargado exitosamente
+- `401` - No autenticado
+- `403` - Sin permiso (no es propietario ni GH/Contador)
+- `404` - Incapacidad no encontrada o sin documento
+- `500` - Error del servidor
+
+**🔐 Seguridad:**
+- Solo el propietario o usuarios con rol GH/Contador pueden descargar
+- Validación de existencia de archivo en sistema de archivos
+- Headers de seguridad para prevenir XSS
+
+**💡 Escenarios de Uso:**
+
+**Caso 1: Colaborador descarga su propio certificado**
+```bash
+# Usuario descarga certificado que subió previamente
+curl -X GET http://localhost:3000/api/incapacidades/10/documento \
+  -H "Authorization: Bearer {tokenColaborador}" \
+  -o mi_certificado.pdf
+
+# Resultado: Descarga exitosa del archivo PDF
+```
+
+**Caso 2: GH revisa certificado médico para validación**
+```javascript
+// Gestor de RRHH abre documento para revisión
+const response = await fetch('/api/incapacidades/10/documento', {
+  headers: { 'Authorization': `Bearer ${tokenGH}` }
+});
+
+const blob = await response.blob();
+const url = URL.createObjectURL(blob);
+window.open(url); // Abre en nueva pestaña
+
+// Resultado: PDF se abre para revisión
+```
+
+**Caso 3: Contador descarga para archivo contable**
+```bash
+# Contador descarga todos los certificados del mes
+for id in 15 16 17 18; do
+  curl -X GET http://localhost:3000/api/incapacidades/$id/documento \
+    -H "Authorization: Bearer {tokenContador}" \
+    -o "certificado_$id.pdf"
+done
+
+# Resultado: 4 PDFs descargados para contabilidad
+```
+
+---
+
 ## 🔔 MÓDULO 3: NOTIFICACIONES
 
 ### 3.1 Listar Mis Notificaciones
