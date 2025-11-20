@@ -130,13 +130,14 @@ export async function detectarDuplicados(usuario_id, fecha_inicio, fecha_fin, in
 }
 
 /**
- * Valida límites de días según tipo de incapacidad
+ * Valida límites de días según tipo de incapacidad (NORMATIVA COLOMBIANA)
  */
 export function validarLimitesDiasPorTipo(tipo, dias) {
   const limites = {
-    'EPS': { min: 1, max: 180, mensaje: 'EPS: 1-180 días' },
-    'ARL': { min: 1, max: 540, mensaje: 'ARL: 1-540 días (18 meses)' },
-    'Licencia': { min: 1, max: 90, mensaje: 'Licencia: 1-90 días' }
+    'EPS': { min: 1, max: 180, mensaje: 'EPS: 1-180 días (Ley colombiana)' },
+    'ARL': { min: 1, max: 540, mensaje: 'ARL: 1-540 días (18 meses, Ley colombiana)' },
+    'Licencia_Maternidad': { min: 1, max: 126, mensaje: 'Licencia de Maternidad: 126 días (18 semanas, Ley 1822 de 2017)' },
+    'Licencia_Paternidad': { min: 1, max: 14, mensaje: 'Licencia de Paternidad: hasta 14 días según cotización (Ley 1468 de 2011)' }
   };
 
   const limite = limites[tipo];
@@ -152,6 +153,99 @@ export function validarLimitesDiasPorTipo(tipo, dias) {
   }
 
   return { valido: true };
+}
+
+/**
+ * Calcula porcentaje de pago según normativa colombiana
+ * Retorna objeto con desglose de días y porcentajes
+ */
+export function calcularPorcentajesPago(tipo, dias_incapacidad) {
+  const resultado = {
+    tipo,
+    dias_totales: dias_incapacidad,
+    tramos: []
+  };
+
+  if (tipo === 'EPS') {
+    // NORMATIVA EPS (Enfermedad General - Origen Común)
+    // Día 1-2: 66.67% paga Empleador
+    // Día 3-90: 66.67% paga EPS
+    // Día 91-180: 50% paga EPS
+    
+    if (dias_incapacidad >= 1) {
+      const diasEmpleador = Math.min(dias_incapacidad, 2);
+      resultado.tramos.push({
+        dias_inicio: 1,
+        dias_fin: diasEmpleador,
+        dias_total: diasEmpleador,
+        porcentaje: 66.67,
+        quien_paga: 'Empleador',
+        nota: 'Primeros 2 días asume empleador (2/3 del salario)'
+      });
+    }
+
+    if (dias_incapacidad >= 3) {
+      const diasEPS_66 = Math.min(dias_incapacidad - 2, 88); // Días 3-90 = 88 días
+      resultado.tramos.push({
+        dias_inicio: 3,
+        dias_fin: 2 + diasEPS_66,
+        dias_total: diasEPS_66,
+        porcentaje: 66.67,
+        quien_paga: 'EPS',
+        nota: 'Día 3-90: EPS paga 66.67% del IBC (SMLV mínimo)'
+      });
+    }
+
+    if (dias_incapacidad >= 91) {
+      const diasEPS_50 = dias_incapacidad - 90; // Días 91-180
+      resultado.tramos.push({
+        dias_inicio: 91,
+        dias_fin: dias_incapacidad,
+        dias_total: diasEPS_50,
+        porcentaje: 50,
+        quien_paga: 'EPS',
+        nota: 'Día 91-180: EPS paga 50% del IBC (valoración pérdida capacidad laboral)'
+      });
+    }
+
+  } else if (tipo === 'ARL') {
+    // NORMATIVA ARL (Accidente o Enfermedad Laboral)
+    // Desde día 1: 100% paga ARL
+    resultado.tramos.push({
+      dias_inicio: 1,
+      dias_fin: dias_incapacidad,
+      dias_total: dias_incapacidad,
+      porcentaje: 100,
+      quien_paga: 'ARL',
+      nota: 'ARL paga 100% del IBC desde el primer día sin excepciones'
+    });
+
+  } else if (tipo === 'Licencia_Maternidad') {
+    // NORMATIVA Licencia de Maternidad (Ley 1822 de 2017)
+    // 126 días (18 semanas): 100% paga EPS
+    resultado.tramos.push({
+      dias_inicio: 1,
+      dias_fin: dias_incapacidad,
+      dias_total: dias_incapacidad,
+      porcentaje: 100,
+      quien_paga: 'EPS',
+      nota: 'Licencia de Maternidad: 100% del IBC por 126 días (mínimo 1 SMLV)'
+    });
+
+  } else if (tipo === 'Licencia_Paternidad') {
+    // NORMATIVA Licencia de Paternidad (Ley 1468 de 2011)
+    // Depende de semanas cotizadas: 100% paga EPS
+    resultado.tramos.push({
+      dias_inicio: 1,
+      dias_fin: dias_incapacidad,
+      dias_total: dias_incapacidad,
+      porcentaje: 100,
+      quien_paga: 'EPS',
+      nota: 'Licencia de Paternidad: 100% del IBC (proporcional a cotización incompleta)'
+    });
+  }
+
+  return resultado;
 }
 
 /**
@@ -172,7 +266,7 @@ export async function validarIncapacidad(datos, incapacidad_id = null) {
   const errores = [];
 
   // Validar tipo
-  const tiposValidos = ['EPS', 'ARL', 'Licencia'];
+  const tiposValidos = ['EPS', 'ARL', 'Licencia_Maternidad', 'Licencia_Paternidad'];
   if (datos.tipo && !tiposValidos.includes(datos.tipo)) {
     errores.push(`Tipo de incapacidad inválido. Tipos permitidos: ${tiposValidos.join(', ')}`);
   }

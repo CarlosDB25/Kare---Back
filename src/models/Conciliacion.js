@@ -148,15 +148,27 @@ export default class ConciliacionModel {
 }
 
 /**
- * Calcula la conciliación de una incapacidad según normativa colombiana
+ * Calcula la conciliación de una incapacidad según normativa colombiana 2025
  * 
- * Reglas:
- * - Primeros 2 días: Empresa paga 100%
- * - Desde día 3: EPS/ARL paga 66.67%
- * - Base de cálculo: IBC / 30 (valor día)
+ * NORMATIVA LEGAL COLOMBIANA:
+ * 
+ * EPS (Enfermedad General - Origen Común):
+ * - Día 1-2: Empleador paga 66.67% del salario (2/3 del salario)
+ * - Día 3-90: EPS paga 66.67% del IBC (mínimo 1 SMLV proporcional)
+ * - Día 91-180: EPS paga 50% del IBC (aplica si trabajador aún no está en valoración de pérdida de capacidad laboral)
+ * - Día 181-540: Remite a Fondo de Pensiones para definición de invalidez
+ * 
+ * ARL (Accidente o Enfermedad Laboral):
+ * - Desde día 1: ARL paga 100% del IBC (sin excepciones)
+ * 
+ * Licencia de Maternidad (Ley 1822 de 2017):
+ * - 126 días (18 semanas): EPS paga 100% del IBC (mínimo 1 SMLV)
+ * 
+ * Licencia de Paternidad (Ley 1468 de 2011):
+ * - Hasta 14 días: EPS paga 100% del IBC (proporcional a cotización si incompleta)
  */
 export function calcularConciliacion(incapacidad, usuario) {
-  const { fecha_inicio, fecha_fin } = incapacidad;
+  const { fecha_inicio, fecha_fin, tipo } = incapacidad;
   const { ibc, salario_base } = usuario;
   
   if (!ibc || !fecha_inicio || !fecha_fin) {
@@ -175,16 +187,118 @@ export function calcularConciliacion(incapacidad, usuario) {
   // Valor de un día de trabajo
   const valor_dia = ibc / 30;
   
-  // Primeros 2 días: empresa paga 100%
-  const dias_empresa = Math.min(dias_incapacidad, 2);
-  const valor_empresa = valor_dia * dias_empresa;
+  let dias_empresa = 0;
+  let valor_empresa = 0;
+  let dias_eps = 0;
+  let valor_eps = 0;
+  let dias_arl = 0;
+  let valor_arl = 0;
+  let desglose = [];
   
-  // Resto de días: EPS/ARL paga 66.67%
-  const dias_eps = Math.max(dias_incapacidad - 2, 0);
-  const valor_eps = valor_dia * dias_eps * 0.6667;
+  if (tipo === 'EPS') {
+    // NORMATIVA EPS (Enfermedad General - Origen Común)
+    
+    // Tramo 1: Día 1-2 (Empleador paga 66.67%)
+    if (dias_incapacidad >= 1) {
+      dias_empresa = Math.min(dias_incapacidad, 2);
+      valor_empresa = valor_dia * dias_empresa * 0.6667;
+      desglose.push({
+        dias: `1-${dias_empresa}`,
+        cantidad_dias: dias_empresa,
+        porcentaje: 66.67,
+        quien_paga: 'Empleador',
+        valor: Math.round(valor_empresa * 100) / 100
+      });
+    }
+    
+    // Tramo 2: Día 3-90 (EPS paga 66.67%)
+    if (dias_incapacidad >= 3) {
+      const dias_eps_66 = Math.min(dias_incapacidad - 2, 88); // Máximo 88 días (del día 3 al 90)
+      const valor_eps_66 = valor_dia * dias_eps_66 * 0.6667;
+      dias_eps += dias_eps_66;
+      valor_eps += valor_eps_66;
+      desglose.push({
+        dias: `3-${2 + dias_eps_66}`,
+        cantidad_dias: dias_eps_66,
+        porcentaje: 66.67,
+        quien_paga: 'EPS',
+        valor: Math.round(valor_eps_66 * 100) / 100
+      });
+    }
+    
+    // Tramo 3: Día 91-180 (EPS paga 50%)
+    if (dias_incapacidad >= 91) {
+      const dias_eps_50 = Math.min(dias_incapacidad - 90, 90); // Máximo 90 días (del día 91 al 180)
+      const valor_eps_50 = valor_dia * dias_eps_50 * 0.50;
+      dias_eps += dias_eps_50;
+      valor_eps += valor_eps_50;
+      desglose.push({
+        dias: `91-${90 + dias_eps_50}`,
+        cantidad_dias: dias_eps_50,
+        porcentaje: 50.00,
+        quien_paga: 'EPS',
+        valor: Math.round(valor_eps_50 * 100) / 100,
+        nota: 'Aplica si aún no está en valoración de pérdida de capacidad laboral'
+      });
+    }
+    
+    // Tramo 4: Día 181+ (Fondo de Pensiones)
+    if (dias_incapacidad >= 181) {
+      desglose.push({
+        dias: `181-${dias_incapacidad}`,
+        cantidad_dias: dias_incapacidad - 180,
+        porcentaje: 50.00,
+        quien_paga: 'Fondo de Pensiones',
+        valor: 0,
+        nota: 'EPS remite al fondo de pensiones para definición de invalidez'
+      });
+    }
+    
+  } else if (tipo === 'ARL') {
+    // NORMATIVA ARL (Accidente o Enfermedad Laboral)
+    // Desde día 1: ARL paga 100% del IBC
+    dias_arl = dias_incapacidad;
+    valor_arl = valor_dia * dias_arl;
+    desglose.push({
+      dias: `1-${dias_incapacidad}`,
+      cantidad_dias: dias_incapacidad,
+      porcentaje: 100.00,
+      quien_paga: 'ARL',
+      valor: Math.round(valor_arl * 100) / 100,
+      nota: 'ARL paga 100% desde el primer día sin excepciones'
+    });
+    
+  } else if (tipo === 'Licencia_Maternidad') {
+    // NORMATIVA Licencia de Maternidad (Ley 1822 de 2017)
+    // 126 días (18 semanas): 100% paga EPS
+    dias_eps = dias_incapacidad;
+    valor_eps = valor_dia * dias_eps;
+    desglose.push({
+      dias: `1-${dias_incapacidad}`,
+      cantidad_dias: dias_incapacidad,
+      porcentaje: 100.00,
+      quien_paga: 'EPS',
+      valor: Math.round(valor_eps * 100) / 100,
+      nota: 'Licencia de Maternidad: 100% del IBC por 126 días (mínimo 1 SMLV)'
+    });
+    
+  } else if (tipo === 'Licencia_Paternidad') {
+    // NORMATIVA Licencia de Paternidad (Ley 1468 de 2011)
+    // Hasta 14 días: 100% paga EPS
+    dias_eps = dias_incapacidad;
+    valor_eps = valor_dia * dias_eps;
+    desglose.push({
+      dias: `1-${dias_incapacidad}`,
+      cantidad_dias: dias_incapacidad,
+      porcentaje: 100.00,
+      quien_paga: 'EPS',
+      valor: Math.round(valor_eps * 100) / 100,
+      nota: 'Licencia de Paternidad: 100% del IBC (proporcional si cotización incompleta)'
+    });
+  }
   
   // Total que recibe el colaborador
-  const valor_total = valor_empresa + valor_eps;
+  const valor_total = valor_empresa + valor_eps + valor_arl;
   
   return {
     dias_incapacidad,
@@ -192,11 +306,16 @@ export function calcularConciliacion(incapacidad, usuario) {
     ibc,
     valor_dia: Math.round(valor_dia * 100) / 100,
     dias_empresa,
-    porcentaje_empresa: 100.00,
+    porcentaje_empresa: dias_empresa > 0 ? 66.67 : 0,
     valor_empresa: Math.round(valor_empresa * 100) / 100,
     dias_eps,
-    porcentaje_eps: 66.67,
+    porcentaje_eps: dias_eps > 0 ? (tipo === 'EPS' && dias_incapacidad >= 91 ? 58.34 : 66.67) : 0, // Promedio ponderado si aplica tramo de 50%
     valor_eps: Math.round(valor_eps * 100) / 100,
-    valor_total: Math.round(valor_total * 100) / 100
+    valor_total: Math.round(valor_total * 100) / 100,
+    desglose_detallado: desglose,
+    normativa_aplicada: tipo === 'EPS' ? 'Enfermedad General - Origen Común' : 
+                       tipo === 'ARL' ? 'Accidente o Enfermedad Laboral' :
+                       tipo === 'Licencia_Maternidad' ? 'Ley 1822 de 2017' :
+                       tipo === 'Licencia_Paternidad' ? 'Ley 1468 de 2011' : 'N/A'
   };
 }

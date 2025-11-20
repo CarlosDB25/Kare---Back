@@ -231,14 +231,10 @@ export const IncapacidadController = {
       // 1. Extraer texto del documento
       const { texto, confianza } = await extraerTextoDocumento(rutaArchivo, nombreArchivo);
 
-      // 2. Verificar confianza mínima (solo para imágenes OCR)
+      // 2. Verificar confianza mínima (solo advertencia, no bloqueo)
+      let advertencia_confianza = null;
       if (confianza < 70 && !nombreArchivo.toLowerCase().endsWith('.pdf')) {
-        fs.unlinkSync(rutaArchivo);
-        return res.status(400).json({
-          success: false,
-          message: `Documento no legible (OCR confianza: ${confianza}%). Intente con mejor calidad o use PDF`,
-          data: { confianza }
-        });
+        advertencia_confianza = `Confianza OCR baja (${confianza}%). Se recomienda revisar manualmente o usar PDF de mejor calidad`;
       }
 
       // 3. Analizar documento
@@ -246,38 +242,89 @@ export const IncapacidadController = {
 
       // 4. Obtener datos del usuario
       const usuario = await UsuarioModel.obtenerPorId(req.user.id);
-      const erroresUsuario = [];
+      const advertencias = [];
 
-      // 5. Validar contra datos del usuario
+      // 5. Validar contra datos del usuario (MODO SUGERENCIA)
       if (campos.nombre && usuario.nombre) {
         const similitud = calcularSimilitudNombres(campos.nombre, usuario.nombre);
         if (similitud < 60) {
-          erroresUsuario.push(
-            `Nombre en documento "${campos.nombre}" no coincide suficientemente con tu perfil "${usuario.nombre}" (similitud: ${similitud}%)`
-          );
+          advertencias.push({
+            tipo: 'nombre',
+            gravedad: 'alta',
+            mensaje: `Nombre en documento "${campos.nombre}" no coincide suficientemente con perfil "${usuario.nombre}" (similitud: ${similitud}%)`
+          });
+        } else if (similitud < 80) {
+          advertencias.push({
+            tipo: 'nombre',
+            gravedad: 'media',
+            mensaje: `Nombre tiene similitud moderada (${similitud}%). Verificar posibles variaciones en el nombre`
+          });
         }
       }
 
       if (campos.documento && usuario.documento) {
         if (campos.documento !== usuario.documento.toString()) {
-          erroresUsuario.push(
-            `Documento en archivo (${campos.documento}) no coincide con tu perfil (${usuario.documento})`
-          );
+          advertencias.push({
+            tipo: 'documento',
+            gravedad: 'alta',
+            mensaje: `Documento en archivo (${campos.documento}) no coincide con perfil (${usuario.documento})`
+          });
         }
+      }
+
+      // Validar fechas si están presentes
+      if (campos.fecha_inicio && campos.fecha_fin) {
+        const inicio = new Date(campos.fecha_inicio);
+        const fin = new Date(campos.fecha_fin);
+        if (inicio > fin) {
+          advertencias.push({
+            tipo: 'fechas',
+            gravedad: 'alta',
+            mensaje: 'Fecha de inicio es posterior a fecha de fin'
+          });
+        }
+      }
+
+      // Agregar advertencia de confianza si existe
+      if (advertencia_confianza) {
+        advertencias.push({
+          tipo: 'ocr',
+          gravedad: 'media',
+          mensaje: advertencia_confianza
+        });
       }
 
       // 6. Eliminar archivo temporal
       fs.unlinkSync(rutaArchivo);
 
-      // 7. Combinar errores
-      const todosLosErrores = [...errores, ...erroresUsuario];
+      // 7. Generar sugerencia de validez para GH
+      const errores_graves = advertencias.filter(adv => adv.gravedad === 'alta');
+      const errores_moderados = advertencias.filter(adv => adv.gravedad === 'media');
+      
+      let sugerencia_validez = 'APROBAR';
+      let confianza_sugerencia = 100;
+      let justificacion = '';
+      
+      if (errores_graves.length > 0) {
+        sugerencia_validez = 'RECHAZAR';
+        confianza_sugerencia = 25;
+        justificacion = `Se encontraron ${errores_graves.length} error(es) grave(s) que sugieren documento inválido o no corresponde al usuario`;
+      } else if (errores_moderados.length > 0) {
+        sugerencia_validez = 'REVISAR_MANUALMENTE';
+        confianza_sugerencia = 60;
+        justificacion = `Se encontraron ${errores_moderados.length} advertencia(s). Se recomienda revisión manual por GH`;
+      } else if (errores.length > 0) {
+        sugerencia_validez = 'REVISAR_MANUALMENTE';
+        confianza_sugerencia = 70;
+        justificacion = 'Documento legible pero faltan algunos campos. Revisar manualmente';
+      } else {
+        justificacion = 'Documento válido, todos los campos coinciden correctamente';
+      }
 
-      // 8. Responder
+      // 8. Responder con SUGERENCIA (no bloqueo)
       res.json({
-        success: todosLosErrores.length === 0,
-        message: todosLosErrores.length === 0 
-          ? 'Documento valido y datos coinciden' 
-          : 'Se encontraron advertencias en el documento',
+        success: true, // SIEMPRE success, GH decide
+        message: 'Análisis OCR completado. Sugerencia generada para Gestión Humana',
         data: {
           tipo_detectado: tipo,
           campos_extraidos: {
@@ -291,11 +338,18 @@ export const IncapacidadController = {
             entidad: campos.entidad
           },
           confianza_ocr: confianza,
-          validacion: {
+          analisis_validacion: {
             documento_legible: confianza >= 70,
             campos_completos: errores.length === 0,
-            usuario_coincide: erroresUsuario.length === 0,
-            errores: todosLosErrores
+            usuario_coincide: advertencias.filter(a => a.tipo !== 'ocr').length === 0,
+            advertencias: advertencias,
+            errores_documento: errores
+          },
+          sugerencia_para_gh: {
+            accion_sugerida: sugerencia_validez, // APROBAR | RECHAZAR | REVISAR_MANUALMENTE
+            confianza: confianza_sugerencia, // 0-100
+            justificacion: justificacion,
+            nota: 'Esta es una sugerencia automática. Gestión Humana tiene la decisión final.'
           }
         }
       });
