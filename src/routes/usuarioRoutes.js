@@ -18,6 +18,14 @@ router.get(
   UsuarioController.obtenerTodos
 );
 
+// GET /api/usuarios/:id - Obtener usuario por ID
+router.get(
+  '/:id',
+  authMiddleware,
+  roleMiddleware(['gh', 'conta']),
+  UsuarioController.obtenerPorId
+);
+
 // PUT /api/usuarios/:id/rol - Actualizar rol de usuario
 router.put(
   '/:id/rol',

@@ -136,7 +136,7 @@ export function validarLimitesDiasPorTipo(tipo, dias) {
   const limites = {
     'EPS': { min: 1, max: 180, mensaje: 'EPS: 1-180 días (Ley colombiana)' },
     'ARL': { min: 1, max: 540, mensaje: 'ARL: 1-540 días (18 meses, Ley colombiana)' },
-    'Licencia_Maternidad': { min: 1, max: 126, mensaje: 'Licencia de Maternidad: 126 días (18 semanas, Ley 1822 de 2017)' },
+    'Licencia_Maternidad': { min: 1, max: 126, mensaje: 'Licencia de Maternidad: 18-126 días (18 semanas, Ley 1822 de 2017)' },
     'Licencia_Paternidad': { min: 1, max: 14, mensaje: 'Licencia de Paternidad: hasta 14 días según cotización (Ley 1468 de 2011)' }
   };
 
@@ -145,6 +145,7 @@ export function validarLimitesDiasPorTipo(tipo, dias) {
     return { valido: true }; // Si no hay límite definido, permitir
   }
 
+  // Para Licencia_Maternidad, permitir rango amplio (puede iniciar antes del parto)
   if (dias < limite.min || dias > limite.max) {
     return {
       valido: false,

@@ -175,11 +175,12 @@ export const IncapacidadController = {
   async actualizarEstado(req, res) {
     try {
       const { id } = req.params;
-      const { nuevo_estado, observaciones } = req.body;
+      const { estado, nuevo_estado, observaciones } = req.body;
+      const estadoActualizar = estado || nuevo_estado;
 
       // Validar estado
       const estadosValidos = ['reportada', 'en_revision', 'validada', 'rechazada', 'conciliada', 'pagada', 'archivada', 'radicada'];
-      if (!nuevo_estado || !estadosValidos.includes(nuevo_estado)) {
+      if (!estadoActualizar || !estadosValidos.includes(estadoActualizar)) {
         return res.status(400).json({
           success: false,
           message: 'Estado inválido',
@@ -199,8 +200,8 @@ export const IncapacidadController = {
 
       const estadoAnterior = incapacidad.estado;
 
-      // Validar transición de estado
-      const validacionTransicion = validarTransicionEstado(estadoAnterior, nuevo_estado);
+      // Validar transición de estados
+      const validacionTransicion = validarTransicionEstado(estadoAnterior, estadoActualizar);
       if (!validacionTransicion.valido) {
         return res.status(400).json({
           success: false,
@@ -210,14 +211,14 @@ export const IncapacidadController = {
       }
 
       // Actualizar estado
-      const actualizado = await IncapacidadModel.actualizarEstado(id, nuevo_estado, observaciones);
+      const actualizado = await IncapacidadModel.actualizarEstado(id, estadoActualizar, observaciones);
 
       if (actualizado) {
         // Registrar en historial
         await HistorialEstadoModel.crear({
           incapacidad_id: id,
           estado_anterior: estadoAnterior,
-          estado_nuevo: nuevo_estado,
+          estado_nuevo: estadoActualizar,
           cambiado_por: req.user.id,
           observaciones
         });
@@ -226,15 +227,15 @@ export const IncapacidadController = {
         await NotificacionModel.crear({
           usuario_id: incapacidad.usuario_id,
           tipo: 'estado_cambiado',
-          titulo: `Incapacidad ${nuevo_estado}`,
-          mensaje: `Tu incapacidad ${incapacidad.tipo} cambió a estado: ${nuevo_estado}. ${observaciones || ''}`,
+          titulo: `Incapacidad ${estadoActualizar}`,
+          mensaje: `Tu incapacidad ${incapacidad.tipo} cambió a estado: ${estadoActualizar}. ${observaciones || ''}`,
           incapacidad_id: id
         });
 
         res.json({
           success: true,
           message: 'Estado actualizado exitosamente',
-          data: { id, estado_anterior: estadoAnterior, estado_nuevo: nuevo_estado }
+          data: { id, estado_anterior: estadoAnterior, estado_nuevo: estadoActualizar }
         });
       } else {
         res.status(500).json({
