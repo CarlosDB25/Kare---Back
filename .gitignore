@@ -46,3 +46,7 @@ RESUMEN_PROGRESO.md
 
 # Herramientas de desarrollo personal
 tools/
+
+# Scripts de testing (solo desarrollo local)
+test-*.ps1
+test-*.sh

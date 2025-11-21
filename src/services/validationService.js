@@ -55,14 +55,14 @@ export function validarFechas(fecha_inicio, fecha_fin) {
     };
   }
 
-  // Validar que fecha_fin no sea muy futura (máximo 90 días adelante)
-  const en90Dias = new Date();
-  en90Dias.setDate(en90Dias.getDate() + 90);
+  // Validar que fecha_fin no sea muy futura (máximo 365 días adelante - 1 año)
+  const en365Dias = new Date();
+  en365Dias.setDate(en365Dias.getDate() + 365);
   
-  if (fin > en90Dias) {
+  if (fin > en365Dias) {
     return {
       valido: false,
-      mensaje: 'La fecha de fin no puede ser mayor a 90 días en el futuro'
+      mensaje: 'La fecha de fin no puede ser mayor a 1 año en el futuro'
     };
   }
 
@@ -74,12 +74,12 @@ export function validarFechas(fecha_inicio, fecha_fin) {
     };
   }
 
-  // Validar duración máxima (180 días)
+  // Validar duración máxima (180 días para EPS, 540 para ARL se valida después)
   const diasDiferencia = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24));
-  if (diasDiferencia > 180) {
+  if (diasDiferencia > 540) {
     return {
       valido: false,
-      mensaje: 'La incapacidad no puede durar más de 180 días'
+      mensaje: 'La incapacidad no puede durar más de 540 días (límite máximo ARL)'
     };
   }
 
