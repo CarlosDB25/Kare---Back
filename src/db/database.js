@@ -36,15 +36,23 @@ export async function initDatabase() {
  * Crea las tablas de la base de datos si no existen
  */
 async function createTables() {
-  // Verificar si las tablas críticas existen
-  const tablas = await db.all(`
-    SELECT name FROM sqlite_master 
-    WHERE type='table' AND name IN ('usuarios', 'incapacidades', 'historial_estados', 'conciliaciones', 'notificaciones', 'reemplazos')
-  `);
-  
-  if (tablas.length >= 6) {
-    console.log('[DB] Tablas verificadas correctamente');
-    return;
+  // Verificar si la tabla conciliaciones tiene la columna dias_incapacidad
+  try {
+    const columnas = await db.all(`PRAGMA table_info(conciliaciones)`);
+    const tieneDiasIncapacidad = columnas.some(col => col.name === 'dias_incapacidad');
+    
+    if (!tieneDiasIncapacidad && columnas.length > 0) {
+      console.log('[DB] Esquema antiguo detectado. Eliminando base de datos...');
+      // Eliminar todas las tablas para recrearlas
+      await db.exec(`DROP TABLE IF EXISTS reemplazos`);
+      await db.exec(`DROP TABLE IF EXISTS conciliaciones`);
+      await db.exec(`DROP TABLE IF EXISTS notificaciones`);
+      await db.exec(`DROP TABLE IF EXISTS historial_estados`);
+      await db.exec(`DROP TABLE IF EXISTS incapacidades`);
+      await db.exec(`DROP TABLE IF EXISTS usuarios`);
+    }
+  } catch (error) {
+    // Tabla no existe, continuar con creación normal
   }
 
   console.log('[DB] Creando tablas de la base de datos...');
@@ -121,6 +129,10 @@ async function createTables() {
     CREATE TABLE IF NOT EXISTS conciliaciones (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       incapacidad_id INTEGER NOT NULL UNIQUE,
+      dias_incapacidad INTEGER NOT NULL,
+      salario_base REAL NOT NULL,
+      ibc REAL NOT NULL,
+      valor_dia REAL NOT NULL,
       dias_eps_100 INTEGER DEFAULT 0,
       monto_eps_100 REAL DEFAULT 0,
       dias_empresa_67 INTEGER DEFAULT 0,
