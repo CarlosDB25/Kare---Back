@@ -79,32 +79,40 @@ npm run dev
 
 **✅ El servidor creará automáticamente:**
 - `src/db/kare.db` (base de datos SQLite)
-- 8 usuarios de prueba (gh@kare.com, conta@kare.com, etc.)
+- 5 usuarios de prueba (gh@kare.com, conta@kare.com, etc.)
 - Todas las tablas necesarias
 
-**🌐 URLs de prueba:**
-- Servidor: http://localhost:3000
-- Health Check: http://localhost:3000/api/health
-- API: http://localhost:3000/api
+**🌐 URLs:**
+- **Producción (24/7):** https://kare-back.onrender.com/api
+- **Local (desarrollo):** http://localhost:3000/api
 
 ---
 
 ## ✅ Verificar que Todo Funciona
 
+### Producción (API en línea 24/7)
+```powershell
+# 1. Health check
+curl https://kare-back.onrender.com/api/health
+
+# 2. Login de prueba
+curl -X POST https://kare-back.onrender.com/api/auth/login -H "Content-Type: application/json" -d "{\"email\":\"gh@kare.com\",\"password\":\"123456\"}"
+```
+
+### Local (desarrollo)
 ```powershell
 # 1. Health check
 curl http://localhost:3000/api/health
 
-# 2. Login de prueba
+# 2. Login
 curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d "{\"email\":\"gh@kare.com\",\"password\":\"123456\"}"
 ```
 
-**Respuesta esperada del health check:**
+**Respuesta esperada:**
 ```json
 {
   "success": true,
-  "message": "KARE API funcionando correctamente",
-  "data": { "timestamp": "2025-11-21T..." }
+  "message": "KARE API funcionando correctamente"
 }
 ```
 
@@ -766,6 +774,37 @@ npm run dev
 - Previene bugs por diferencias de versiones
 
 **NO lo elimines ni lo agregues a `.gitignore`**
+
+---
+
+## 🌐 API en Producción
+
+**La API está desplegada y disponible 24/7 en:**
+```
+https://kare-back.onrender.com/api
+```
+
+**Características:**
+- ✅ Hosting gratuito en Render.com
+- ✅ Base de datos SQLite persistente
+- ✅ Deploy automático desde GitHub
+- ✅ HTTPS/SSL incluido
+- ⚠️ Se duerme después de 15 min sin uso (plan gratuito)
+- ⚠️ Primera petición tarda ~30 seg en despertar
+
+**Conectar desde tu frontend:**
+```javascript
+const API_URL = 'https://kare-back.onrender.com/api';
+
+// Ejemplo de login
+fetch(`${API_URL}/auth/login`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: 'gh@kare.com', password: '123456' })
+})
+.then(res => res.json())
+.then(data => console.log(data.data.token));
+```
 
 ---
 
