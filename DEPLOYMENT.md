@@ -79,25 +79,12 @@ EOF
 
 ---
 
-### 4. Crear Carpeta de Uploads
-
-```powershell
-# PowerShell
-New-Item -ItemType Directory -Path "src/uploads" -Force
-
-# Bash/Linux/Mac
-mkdir -p src/uploads
-```
-
-Esta carpeta almacenará los documentos PDF/imágenes subidos por los usuarios.
-
----
-
-### 5. Iniciar el Servidor
+### 4. Iniciar el Servidor
 
 ```powershell
 # Modo desarrollo (con auto-reload)
 npm run dev
+# Nota: src/uploads/ ya existe en el repo con .gitkeep
 
 # O modo producción
 npm start
@@ -181,7 +168,8 @@ Después de la instalación, tu proyecto tendrá:
 Kare---Back/
 ├── node_modules/         # ✅ Generado por npm install
 ├── src/
-│   ├── uploads/          # ✅ Creado manualmente
+│   ├── uploads/          # ✅ Ya existe en repo (con .gitkeep)
+│   │   └── .gitkeep      # Archivos subidos NO se guardan en Git
 │   └── db/
 │       └── kare.db       # ✅ Generado al iniciar servidor
 ├── .env                  # ✅ Creado manualmente

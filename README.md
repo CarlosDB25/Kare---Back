@@ -38,11 +38,9 @@ PORT=3000
 JWT_SECRET=tu_secreto_super_seguro_cambiar_en_produccion
 NODE_ENV=development
 
-# 4. Crear carpeta de uploads
-mkdir -p src/uploads
-
-# 5. Iniciar servidor (auto-crea BD y usuarios de prueba)
+# 4. Iniciar servidor (auto-crea BD y usuarios de prueba)
 npm run dev
+# Nota: src/uploads/ ya existe en el repo
 ```
 
 **🌐 URLs:**
@@ -410,7 +408,7 @@ Kare_main/
 ```
 ❌ node_modules/          # Dependencias (npm install)
 ❌ .env                   # Variables de entorno (crear manualmente)
-❌ src/uploads/*          # Archivos subidos (crear carpeta)
+❌ src/uploads/*          # Carpeta existe (`.gitkeep`), archivos NO se guardan
 ❌ kare.db                # Base de datos (auto-creado al iniciar)
 ❌ tools/                 # Tests y scripts (no en producción)
 ```
@@ -565,7 +563,7 @@ Por seguridad y buenas prácticas, los siguientes archivos/carpetas **NO están 
 | `node_modules/` | ❌ No en Git | `npm install` |
 | `.env` | ❌ No en Git | Crear manualmente con plantilla de arriba |
 | `kare.db` | ❌ No en Git | Se auto-crea al iniciar servidor |
-| `src/uploads/` | ❌ No en Git | `mkdir src/uploads` |
+| `src/uploads/` | ✅ Carpeta en Git | Ya existe con `.gitkeep`, archivos subidos NO se guardan |
 | `tools/` | ❌ No en Git | Carpeta de testing (no necesaria para producción) |
 
 ### Pasos Después de Clonar
@@ -585,11 +583,9 @@ JWT_SECRET=kare_secret_super_seguro_2025_cambiar_en_produccion
 NODE_ENV=development
 "@ | Out-File -FilePath .env -Encoding utf8
 
-# 4. Crear carpeta uploads
-mkdir src/uploads
-
-# 5. Iniciar servidor (crea BD automáticamente)
+# 4. Iniciar servidor (crea BD automáticamente)
 npm run dev
+# Nota: src/uploads/ ya existe en el repo con .gitkeep
 
 # 6. Verificar en navegador
 # http://localhost:3000/api/health
@@ -653,14 +649,6 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```javascript
 // Usar formato YYYY-MM-DD (sin hora)
 fecha_inicio: "2025-11-20"
-```
-
-**Carpeta uploads no existe:**
-```bash
-# Crear manualmente
-mkdir src/uploads
-# O en Windows PowerShell
-New-Item -ItemType Directory -Path "src/uploads"
 ```
 
 ---
