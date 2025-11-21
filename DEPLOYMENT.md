@@ -4,6 +4,19 @@ Esta guía te ayudará a desplegar el sistema KARE desde cero después de clonar
 
 ---
 
+## ⚠️ IMPORTANTE: El Repositorio NO Incluye
+
+El repositorio Git **NO contiene** estos archivos (debes crearlos):
+
+- ❌ `node_modules/` - Dependencias (se instalan con `npm install`)
+- ❌ `.env` - Configuración (debes crearlo manualmente)
+- ❌ `kare.db` - Base de datos (se auto-crea al iniciar)
+- ❌ Archivos en `src/uploads/*` (solo la carpeta con `.gitkeep`)
+
+**Razón:** Seguridad, tamaño y datos locales.
+
+---
+
 ## 📋 Prerequisitos
 
 Antes de comenzar, asegúrate de tener instalado:

@@ -24,34 +24,89 @@
 
 ## 🚀 Inicio Rápido
 
+### ⚠️ IMPORTANTE: Pasos Obligatorios Después de Clonar
+
+**El repositorio NO incluye:**
+- ❌ `node_modules/` (dependencias)
+- ❌ `.env` (configuración)
+- ❌ `kare.db` (base de datos)
+
+**Debes crear estos archivos manualmente:**
+
+#### 1️⃣ Clonar el Repositorio
 ```powershell
-# 1. Clonar el repositorio
 git clone https://github.com/CarlosDB25/Kare---Back.git
 cd Kare---Back
-
-# 2. Instalar dependencias
-npm install
-
-# 3. Configurar variables de entorno
-# Crear archivo .env en la raíz del proyecto:
-PORT=3000
-JWT_SECRET=tu_secreto_super_seguro_cambiar_en_produccion
-NODE_ENV=development
-
-# 4. Iniciar servidor (auto-crea BD y usuarios de prueba)
-npm run dev
-# Nota: src/uploads/ ya existe en el repo
 ```
 
-**🌐 URLs:**
-- **Servidor:** http://localhost:3000
-- **Health Check:** http://localhost:3000/health
-- **API Base:** http://localhost:3000/api
+#### 2️⃣ Instalar Dependencias (OBLIGATORIO)
+```powershell
+npm install
+# Esto crea la carpeta node_modules/ con todas las librerías necesarias
+```
 
-**⚠️ IMPORTANTE:** 
-- La base de datos SQLite (`kare.db`) se crea automáticamente al iniciar el servidor
-- Los usuarios de prueba se crean automáticamente si no existen
-- La carpeta `src/uploads/` debe existir para subir documentos
+#### 3️⃣ Crear Archivo .env (OBLIGATORIO)
+
+**PowerShell:**
+```powershell
+@"
+PORT=3000
+JWT_SECRET=kare_secret_super_seguro_2025_CAMBIAR_EN_PRODUCCION
+NODE_ENV=development
+"@ | Out-File -FilePath .env -Encoding utf8
+```
+
+**Bash/Linux/Mac:**
+```bash
+cat > .env << 'EOF'
+PORT=3000
+JWT_SECRET=kare_secret_super_seguro_2025_CAMBIAR_EN_PRODUCCION
+NODE_ENV=development
+EOF
+```
+
+**O crear manualmente un archivo `.env` en la raíz con:**
+```
+PORT=3000
+JWT_SECRET=kare_secret_super_seguro_2025_CAMBIAR_EN_PRODUCCION
+NODE_ENV=development
+```
+
+#### 4️⃣ Iniciar el Servidor
+```powershell
+npm run dev
+```
+
+**✅ El servidor creará automáticamente:**
+- `src/db/kare.db` (base de datos SQLite)
+- 8 usuarios de prueba (gh@kare.com, conta@kare.com, etc.)
+- Todas las tablas necesarias
+
+**🌐 URLs de prueba:**
+- Servidor: http://localhost:3000
+- Health Check: http://localhost:3000/api/health
+- API: http://localhost:3000/api
+
+---
+
+## ✅ Verificar que Todo Funciona
+
+```powershell
+# 1. Health check
+curl http://localhost:3000/api/health
+
+# 2. Login de prueba
+curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d "{\"email\":\"gh@kare.com\",\"password\":\"123456\"}"
+```
+
+**Respuesta esperada del health check:**
+```json
+{
+  "success": true,
+  "message": "KARE API funcionando correctamente",
+  "data": { "timestamp": "2025-11-21T..." }
+}
+```
 
 ---
 
@@ -554,49 +609,163 @@ Módulos:
 
 ## 📦 Configuración Post-Clonado
 
-### Archivos NO Incluidos en el Repositorio
+### ⚠️ CHECKLIST OBLIGATORIO
 
-Por seguridad y buenas prácticas, los siguientes archivos/carpetas **NO están en Git** (`.gitignore`):
+Después de clonar el repositorio, **DEBES hacer esto** para que funcione:
 
-| Archivo/Carpeta | Estado | Acción Requerida |
-|-----------------|--------|------------------|
-| `node_modules/` | ❌ No en Git | `npm install` |
-| `.env` | ❌ No en Git | Crear manualmente con plantilla de arriba |
-| `kare.db` | ❌ No en Git | Se auto-crea al iniciar servidor |
-| `src/uploads/` | ✅ Carpeta en Git | Ya existe con `.gitkeep`, archivos subidos NO se guardan |
-| `tools/` | ❌ No en Git | Carpeta de testing (no necesaria para producción) |
-
-### Pasos Después de Clonar
-
+#### ✅ Paso 1: Instalar Dependencias
 ```powershell
-# 1. Clonar repositorio
-git clone https://github.com/CarlosDB25/Kare---Back.git
-cd Kare---Back
-
-# 2. Instalar dependencias
 npm install
+```
+**¿Por qué?** El repositorio NO incluye `node_modules/` (pesa ~500MB). Este comando descarga todas las librerías necesarias (express, sqlite3, bcrypt, jwt, tesseract.js, etc.)
 
-# 3. Crear archivo .env
+#### ✅ Paso 2: Crear el Archivo .env
+
+**Opción A - PowerShell:**
+```powershell
 @"
 PORT=3000
-JWT_SECRET=kare_secret_super_seguro_2025_cambiar_en_produccion
+JWT_SECRET=kare_secret_super_seguro_2025_CAMBIAR_EN_PRODUCCION
 NODE_ENV=development
 "@ | Out-File -FilePath .env -Encoding utf8
+```
 
-# 4. Iniciar servidor (crea BD automáticamente)
+**Opción B - Bash/Linux/Mac:**
+```bash
+cat > .env << 'EOF'
+PORT=3000
+JWT_SECRET=kare_secret_super_seguro_2025_CAMBIAR_EN_PRODUCCION
+NODE_ENV=development
+EOF
+```
+
+**Opción C - Crear manualmente:**
+1. Crear un archivo llamado `.env` en la raíz del proyecto
+2. Copiar y pegar exactamente:
+```
+PORT=3000
+JWT_SECRET=kare_secret_super_seguro_2025_CAMBIAR_EN_PRODUCCION
+NODE_ENV=development
+```
+
+**¿Por qué?** El archivo `.env` contiene configuración sensible (como el secreto JWT) y NO está en Git por seguridad.
+
+#### ✅ Paso 3: Iniciar el Servidor
+```powershell
 npm run dev
-# Nota: src/uploads/ ya existe en el repo con .gitkeep
-
-# 6. Verificar en navegador
-# http://localhost:3000/api/health
 ```
 
-**✅ El servidor está listo cuando veas:**
+**¿Qué hace esto?**
+1. Lee el archivo `.env`
+2. Inicia el servidor en puerto 3000
+3. **Crea automáticamente** la base de datos `src/db/kare.db`
+4. **Crea automáticamente** 8 usuarios de prueba
+5. **Crea automáticamente** todas las tablas
+
+**Salida esperada en consola:**
 ```
-🚀 Servidor KARE corriendo en puerto 3000
-✅ Base de datos inicializada
-👤 Usuarios de prueba creados
+[KARE] Servidor ejecutándose en puerto 3000
+[KARE] Ambiente: development
+[KARE] Sistema listo para usar
 ```
+
+#### ✅ Paso 4: Verificar que Funciona
+```powershell
+# Abrir en navegador o hacer curl:
+curl http://localhost:3000/api/health
+```
+
+**Respuesta esperada:**
+```json
+{
+  "success": true,
+  "message": "KARE API funcionando correctamente"
+}
+```
+
+---
+
+### 📋 Archivos NO Incluidos en Git
+
+Por seguridad y buenas prácticas, estos archivos **NO están en el repositorio**:
+
+| Archivo/Carpeta | Estado | ¿Cómo obtenerlo? | ¿Por qué NO está en Git? |
+|-----------------|--------|------------------|--------------------------|
+| `node_modules/` | ❌ No en Git | `npm install` | Pesa ~500MB, se regenera fácil |
+| `.env` | ❌ No en Git | Crear manualmente (ver arriba) | Contiene datos sensibles (JWT_SECRET) |
+| `kare.db` | ❌ No en Git | Auto-creado al iniciar | Base de datos local, cambia constantemente |
+| `src/uploads/*` | ✅ Carpeta en Git | Ya existe con `.gitkeep` | Los archivos subidos son locales, no se comparten |
+| `tools/` | ❌ No en Git | No necesario para producción | Tests y scripts de desarrollo |
+
+---
+
+### 🚨 Errores Comunes y Soluciones
+
+#### Error: "Cannot find module 'express'"
+**Causa:** No ejecutaste `npm install`  
+**Solución:**
+```powershell
+npm install
+```
+
+#### Error: "JWT_SECRET is not defined"
+**Causa:** No creaste el archivo `.env`  
+**Solución:** Ver "Paso 2" arriba para crear el `.env`
+
+#### Error: "EADDRINUSE: address already in use"
+**Causa:** El puerto 3000 ya está ocupado  
+**Solución 1 - Cambiar puerto:**
+```powershell
+# Editar .env y cambiar a:
+PORT=3001
+```
+**Solución 2 - Matar proceso:**
+```powershell
+# PowerShell
+Stop-Process -Name "node" -Force
+```
+
+#### Error: "ENOENT: no such file or directory, open '.env'"
+**Causa:** El archivo `.env` no existe  
+**Solución:** Crear el archivo `.env` según "Paso 2" arriba
+
+#### Base de datos no se crea
+**Causa:** Falta la carpeta `src/db/`  
+**Solución:**
+```powershell
+mkdir src/db
+npm run dev
+```
+
+---
+
+### ✅ Resumen: 3 Pasos Obligatorios
+
+```powershell
+# 1. Instalar dependencias
+npm install
+
+# 2. Crear .env
+echo "PORT=3000" > .env
+echo "JWT_SECRET=kare_secret_super_seguro_2025" >> .env  
+echo "NODE_ENV=development" >> .env
+
+# 3. Iniciar servidor (auto-crea BD)
+npm run dev
+```
+
+**Listo.** Abre http://localhost:3000/api/health para verificar.
+
+---
+
+## 🔒 Sobre package-lock.json
+
+**✅ SÍ está en Git** - Este archivo es importante porque:
+- Asegura que todos instalen las mismas versiones de dependencias
+- Hace `npm install` más rápido y reproducible
+- Previene bugs por diferencias de versiones
+
+**NO lo elimines ni lo agregues a `.gitignore`**
 
 ---
 

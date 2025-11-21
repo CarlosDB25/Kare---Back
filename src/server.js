@@ -68,15 +68,15 @@ app.use((req, res) => {
 
 // Iniciar servidor
 app.listen(PORT, async () => {
-  console.log(`✅ Servidor KARE ejecutándose en puerto ${PORT}`);
-  console.log(`📍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`[KARE] Servidor ejecutándose en puerto ${PORT}`);
+  console.log(`[KARE] Ambiente: ${process.env.NODE_ENV || 'development'}`);
   
   // Inicializar base de datos
   try {
     await initDatabase();
-    console.log('Sistema KARE listo para usar');
+    console.log('[KARE] Sistema listo para usar');
   } catch (error) {
-    console.error('Error al inicializar base de datos:', error);
+    console.error('[KARE] Error al inicializar base de datos:', error);
   }
 });
 
