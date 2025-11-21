@@ -25,20 +25,35 @@
 ## 🚀 Inicio Rápido
 
 ```powershell
-# 1. Instalar dependencias
+# 1. Clonar el repositorio
+git clone https://github.com/CarlosDB25/Kare---Back.git
+cd Kare---Back
+
+# 2. Instalar dependencias
 npm install
 
-# 2. Iniciar servidor (BD y usuarios ya configurados)
-npm run dev
+# 3. Configurar variables de entorno
+# Crear archivo .env en la raíz del proyecto:
+PORT=3000
+JWT_SECRET=tu_secreto_super_seguro_cambiar_en_produccion
+NODE_ENV=development
 
-# 3. Ejecutar tests (opcional - 143 tests)
-node tools/test-robusto.js
+# 4. Crear carpeta de uploads
+mkdir -p src/uploads
+
+# 5. Iniciar servidor (auto-crea BD y usuarios de prueba)
+npm run dev
 ```
 
 **🌐 URLs:**
 - **Servidor:** http://localhost:3000
 - **Health Check:** http://localhost:3000/health
 - **API Base:** http://localhost:3000/api
+
+**⚠️ IMPORTANTE:** 
+- La base de datos SQLite (`kare.db`) se crea automáticamente al iniciar el servidor
+- Los usuarios de prueba se crean automáticamente si no existen
+- La carpeta `src/uploads/` debe existir para subir documentos
 
 ---
 
@@ -234,13 +249,18 @@ Frontend (Externo)
 
 ## 🧪 Tests
 
+> **⚠️ IMPORTANTE:** Los tests están en la carpeta `tools/` que NO está en el repositorio Git.  
+> Si clonaste el proyecto, necesitas solicitar los archivos de testing por separado.
+
 ### Suite Completa - 143 Tests (100% ✅)
+
+**Configuración necesaria (si tienes acceso a los tests):**
 
 ```powershell
 # Terminal 1: Iniciar servidor
 npm run dev
 
-# Terminal 2: Ejecutar tests
+# Terminal 2: Ejecutar tests (si tienes la carpeta tools/)
 node tools/test-robusto.js
 ```
 
@@ -248,9 +268,10 @@ node tools/test-robusto.js
 
 | Categoría | Tests | Estado |
 |-----------|-------|--------|
-| Autenticación y Seguridad | 20/20 | ✅ 100% |
+| Autenticación y Seguridad | 28/28 | ✅ 100% |
 | Validaciones de Incapacidades | 24/24 | ✅ 100% |
-| **OCR - Extracción y Clasificación** | **9/9** | **✅ 100%** |
+| Documentos Reales | 4/4 | ✅ 100% |
+| OCR - Extracción y Clasificación | 9/9 | ✅ 100% |
 | Gestión de Estados | 10/10 | ✅ 100% |
 | Notificaciones | 10/10 | ✅ 100% |
 | Conciliaciones | 8/8 | ✅ 100% |
@@ -259,9 +280,26 @@ node tools/test-robusto.js
 | Edge Cases y Seguridad | 15/15 | ✅ 100% |
 | Rendimiento | 8/8 | ✅ 100% |
 | Integración E2E | 9/9 | ✅ 100% |
-| **OCR con Documentos Reales** | **8/8** | **✅ 100%** |
 
 **Resultado Final:** 🎉 143/143 tests pasando (100%)
+
+### Testing Manual (Sin carpeta tools/)
+
+Si no tienes la carpeta `tools/`, puedes testear manualmente con Postman o curl:
+
+```bash
+# Health check
+curl http://localhost:3000/api/health
+
+# Login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"gh@kare.com","password":"gh123"}'
+
+# Ver perfil (reemplaza TOKEN)
+curl http://localhost:3000/api/auth/profile \
+  -H "Authorization: Bearer TOKEN"
+```
 
 ### Métricas de Calidad
 
@@ -326,7 +364,7 @@ Kare_main/
 │   │   ├── Conciliacion.js           # Cálculos y registros financieros
 │   │   └── Reemplazo.js              # Asignaciones temporales
 │   │
-│   ├── 📂 routes/                    # Definición de endpoints (7 routers)
+│   ├── 📂 routes/                    # Definición de endpoints (6 routers)
 │   │   ├── authRoutes.js             # POST /login, /register
 │   │   ├── incapacidadRoutes.js      # REST /incapacidades
 │   │   ├── notificacionRoutes.js     # REST /notificaciones
@@ -346,36 +384,47 @@ Kare_main/
 │   │
 │   ├── 📂 db/                        # Base de datos
 │   │   ├── database.js               # Configuración SQLite
-│   │   └── kare.db                   # Base de datos SQLite
+│   │   └── kare.db                   # ⚠️ NO EN GIT (auto-creado)
 │   │
-│   └── 📂 uploads/                   # PDFs/imágenes subidas
+│   └── 📂 uploads/                   # ⚠️ NO EN GIT (crear manualmente)
+│       └── .gitkeep                  # Placeholder para Git
 │
-├── 📂 tools/                         # Scripts y tests
-│   ├── test-robusto.js               # Suite completa (139 tests)
-│   ├── extraer-ocr-real.js           # Herramienta de extracción OCR
-│   └── 📂 tests/                     # Tests modulares
-│       ├── test-globals.js           # Variables compartidas
-│       ├── test-helpers.js           # Funciones auxiliares
-│       ├── test-autenticacion.js     # 20 tests autenticación
-│       ├── test-incapacidades.js     # 33 tests (validaciones + OCR)
-│       ├── test-estados.js           # 10 tests gestión estados
-│       ├── test-modulos.js           # 43 tests (notif/concil/reempl/users)
-│       ├── test-avanzados.js         # 33 tests (OCR reales/edge/perf/E2E)
-│       └── README.md                 # Documentación de tests
-│
-├── 📂 docs/                          # Documentación (8000+ líneas)
+├── 📂 docs/                          # Documentación (en repositorio)
 │   ├── DOCUMENTACION_TECNICA.md      # Arquitectura, OCR y validaciones
-│   ├── GUIA_COMPLETA_TESTS.md        # 139 tests explicados con OCR real
+│   ├── GUIA_COMPLETA_TESTS.md        # 143 tests explicados
 │   ├── GUIA_INTEGRACION_BACKEND.md   # Integración con frontend
+│   ├── GUIA_ENDPOINTS_FACIL.md       # Guía visual de 30 endpoints ⭐⭐⭐⭐⭐
 │   ├── USO_ENDPOINTS_PARTE1.md       # Ejemplos Auth/Incap/OCR/Notif
 │   ├── USO_ENDPOINTS_PARTE2.md       # Ejemplos Concil/Reempl/Users
-│   ├── GUIA_VISUAL_INTERFAZ.md       # Diseño de interfaz sin código frontend
-│   └── TRABAJO_FINAL_COMPLETADO.md   # Resumen ejecutivo
+│   ├── GUIA_VISUAL_INTERFAZ_PARTE1.md # Diseño de interfaz (Auth/Incap)
+│   ├── GUIA_VISUAL_INTERFAZ_PARTE2.md # Diseño de interfaz (Notif/Concil)
+│   └── RESUMEN_FINAL_PROYECTO.md     # Resumen ejecutivo
 │
-├── package.json                      # Dependencias
-├── .env                              # Variables de entorno
+├── package.json                      # Dependencias y scripts
+├── .env                              # ⚠️ NO EN GIT - Crear manualmente (ver ejemplo abajo)
 ├── .gitignore                        # Archivos ignorados
 └── README.md                         # Este archivo
+```
+
+**⚠️ ARCHIVOS NO INCLUIDOS EN GIT (`.gitignore`):**
+```
+❌ node_modules/          # Dependencias (npm install)
+❌ .env                   # Variables de entorno (crear manualmente)
+❌ src/uploads/*          # Archivos subidos (crear carpeta)
+❌ kare.db                # Base de datos (auto-creado al iniciar)
+❌ tools/                 # Tests y scripts (no en producción)
+```
+
+**📝 Plantilla del archivo `.env`:**
+```bash
+# Puerto del servidor
+PORT=3000
+
+# Secreto para JWT (cambiar en producción)
+JWT_SECRET=kare_secret_super_seguro_2025_cambiar_en_produccion
+
+# Entorno
+NODE_ENV=development
 ```
 
 ---
@@ -471,15 +520,17 @@ NODE_ENV=development
 ### Comandos
 
 ```powershell
-# Desarrollo
+# Desarrollo (crea BD automáticamente)
 npm run dev
 
 # Producción
 npm start
 
-# Tests
-npm test
+# Testing manual (la carpeta tools/ no está en Git)
+# Ver sección "Tests" arriba para alternativas
 ```
+
+**📝 Nota:** El archivo `.env` debe crearse manualmente con las variables mostradas arriba.
 
 ---
 
@@ -503,16 +554,88 @@ Módulos:
 
 ---
 
+## 📦 Configuración Post-Clonado
+
+### Archivos NO Incluidos en el Repositorio
+
+Por seguridad y buenas prácticas, los siguientes archivos/carpetas **NO están en Git** (`.gitignore`):
+
+| Archivo/Carpeta | Estado | Acción Requerida |
+|-----------------|--------|------------------|
+| `node_modules/` | ❌ No en Git | `npm install` |
+| `.env` | ❌ No en Git | Crear manualmente con plantilla de arriba |
+| `kare.db` | ❌ No en Git | Se auto-crea al iniciar servidor |
+| `src/uploads/` | ❌ No en Git | `mkdir src/uploads` |
+| `tools/` | ❌ No en Git | Carpeta de testing (no necesaria para producción) |
+
+### Pasos Después de Clonar
+
+```powershell
+# 1. Clonar repositorio
+git clone https://github.com/CarlosDB25/Kare---Back.git
+cd Kare---Back
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Crear archivo .env
+@"
+PORT=3000
+JWT_SECRET=kare_secret_super_seguro_2025_cambiar_en_produccion
+NODE_ENV=development
+"@ | Out-File -FilePath .env -Encoding utf8
+
+# 4. Crear carpeta uploads
+mkdir src/uploads
+
+# 5. Iniciar servidor (crea BD automáticamente)
+npm run dev
+
+# 6. Verificar en navegador
+# http://localhost:3000/api/health
+```
+
+**✅ El servidor está listo cuando veas:**
+```
+🚀 Servidor KARE corriendo en puerto 3000
+✅ Base de datos inicializada
+👤 Usuarios de prueba creados
+```
+
+---
+
 ## 📞 Soporte y Contribución
 
 ### ¿Problemas al integrar?
 
 1. **Consulta:** [GUIA_INTEGRACION_BACKEND.md](docs/GUIA_INTEGRACION_BACKEND.md)
-2. **Verifica:** Servidor corriendo en puerto 3000
-3. **Health check:** `curl http://localhost:3000/health`
-4. **Tests:** `node tools/test-robusto.js`
+2. **Verifica:** 
+   - Servidor corriendo en puerto 3000
+   - Archivo `.env` creado con las variables correctas
+   - Carpeta `src/uploads/` existe
+   - Base de datos `kare.db` se creó automáticamente
+3. **Health check:** `curl http://localhost:3000/api/health`
 
 ### Troubleshooting Común
+
+**Error al iniciar servidor:**
+```bash
+# Verificar que .env existe y tiene PORT=3000
+# Verificar que node_modules está instalado: npm install
+```
+
+**Error "Cannot find module":**
+```bash
+# Reinstalar dependencias
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**No se crean usuarios de prueba:**
+```bash
+# La BD se auto-inicializa al arrancar el servidor
+# Verificar logs en consola al iniciar
+```
 
 **CORS Error:**
 ```javascript
@@ -530,6 +653,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```javascript
 // Usar formato YYYY-MM-DD (sin hora)
 fecha_inicio: "2025-11-20"
+```
+
+**Carpeta uploads no existe:**
+```bash
+# Crear manualmente
+mkdir src/uploads
+# O en Windows PowerShell
+New-Item -ItemType Directory -Path "src/uploads"
 ```
 
 ---
