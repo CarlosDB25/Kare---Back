@@ -24,11 +24,11 @@ export const IncapacidadModel = {
 
     const result = await db.run(
       `INSERT INTO incapacidades 
-       (usuario_id, tipo, fecha_inicio, fecha_fin, dias_incapacidad, diagnostico, 
-        documento, observaciones, estado, porcentaje_pago, entidad_pagadora) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (usuario_id, tipo, fecha_inicio, fecha_fin, dias_totales, diagnostico, 
+        documento_url, observaciones, estado) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [usuario_id, tipo, fecha_inicio, fecha_fin, dias, diagnostico, 
-       documento, observaciones, 'reportada', porcentaje_pago || null, entidad_pagadora || null]
+       documento, observaciones, 'reportada']
     );
 
     return result.lastID;
