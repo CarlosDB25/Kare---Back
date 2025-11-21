@@ -30,6 +30,92 @@ app.use(express.urlencoded({ extended: true }));
 // Servir archivos estáticos (uploads)
 app.use('/uploads', express.static(join(__dirname, 'uploads')));
 
+// Ruta raíz - Página de bienvenida
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>KARE API - Sistema de Gestión de Incapacidades</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+        }
+        .container {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border-radius: 20px;
+          padding: 40px;
+          max-width: 600px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .subtitle { opacity: 0.9; margin-bottom: 30px; }
+        .status { 
+          background: rgba(34, 197, 94, 0.2);
+          padding: 15px;
+          border-radius: 10px;
+          margin: 20px 0;
+          border-left: 4px solid #22c55e;
+        }
+        .endpoint {
+          background: rgba(0, 0, 0, 0.2);
+          padding: 10px 15px;
+          border-radius: 8px;
+          margin: 10px 0;
+          font-family: 'Courier New', monospace;
+        }
+        .info { margin: 20px 0; line-height: 1.6; }
+        a { color: #fbbf24; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>🏥 KARE API</h1>
+        <p class="subtitle">Sistema de Gestión de Incapacidades Laborales</p>
+        
+        <div class="status">
+          ✓ API funcionando correctamente
+        </div>
+        
+        <div class="info">
+          <h3>📡 Endpoints Disponibles:</h3>
+          <div class="endpoint">GET /api/health</div>
+          <div class="endpoint">POST /api/auth/login</div>
+          <div class="endpoint">GET /api/incapacidades</div>
+          <div class="endpoint">GET /api/usuarios</div>
+          <div class="endpoint">... y más</div>
+        </div>
+        
+        <div class="info">
+          <h3>📚 Documentación:</h3>
+          <p>
+            <a href="https://github.com/CarlosDB25/Kare---Back" target="_blank">
+              Ver README en GitHub →
+            </a>
+          </p>
+        </div>
+        
+        <div class="info">
+          <h3>🧪 Prueba rápida:</h3>
+          <div class="endpoint">curl ${req.protocol}://${req.get('host')}/api/health</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `);
+});
+
 // Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/incapacidades', incapacidadRoutes);

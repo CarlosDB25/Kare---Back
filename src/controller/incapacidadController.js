@@ -101,7 +101,7 @@ export const IncapacidadController = {
 
       let incapacidades;
 
-      if (rol === 'colab') {
+      if (rol === 'colaborador') {
         // Colaborador solo ve sus incapacidades
         incapacidades = await IncapacidadModel.obtenerPorUsuario(usuarioId);
       } else {
