@@ -5,6 +5,41 @@ import { UsuarioModel } from '../models/Usuario.js';
  */
 export const UsuarioController = {
   /**
+   * Obtener usuario por ID
+   * GET /api/usuarios/:id
+   */
+  async obtenerPorId(req, res) {
+    try {
+      const { id } = req.params;
+      const usuario = await UsuarioModel.obtenerPorId(id);
+
+      if (!usuario) {
+        return res.status(404).json({
+          success: false,
+          message: 'Usuario no encontrado',
+          data: null
+        });
+      }
+
+      // No enviar el password
+      delete usuario.password;
+
+      res.json({
+        success: true,
+        message: 'Usuario obtenido',
+        data: usuario
+      });
+    } catch (error) {
+      console.error('Error en obtener usuario:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al obtener usuario',
+        data: null
+      });
+    }
+  },
+
+  /**
    * Obtener todos los usuarios
    * GET /api/usuarios
    * Solo GH puede acceder
