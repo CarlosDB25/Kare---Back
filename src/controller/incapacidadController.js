@@ -281,11 +281,22 @@ export const IncapacidadController = {
       }
 
       // 3. Analizar documento
-      const { tipo, campos, errores, valido } = analizarDocumento(texto);
+      const { tipo, campos, errores, advertencias: advertencias_extraccion, valido } = analizarDocumento(texto);
 
       // 4. Obtener datos del usuario
       const usuario = await UsuarioModel.obtenerPorId(req.user.id);
       const advertencias = [];
+      
+      // Incluir advertencias de extracción
+      if (advertencias_extraccion && advertencias_extraccion.length > 0) {
+        advertencias_extraccion.forEach(adv => {
+          advertencias.push({
+            tipo: 'extraccion',
+            gravedad: 'baja',
+            mensaje: adv
+          });
+        });
+      }
 
       // 5. Validar contra datos del usuario (MODO SUGERENCIA)
       if (campos.nombre && usuario.nombre) {
@@ -341,27 +352,48 @@ export const IncapacidadController = {
       fs.unlinkSync(rutaArchivo);
 
       // 7. Generar sugerencia de validez para GH
+      // NOTA: Sistema flexible - solo errores CRÍTICOS causan RECHAZAR
       const errores_graves = advertencias.filter(adv => adv.gravedad === 'alta');
       const errores_moderados = advertencias.filter(adv => adv.gravedad === 'media');
+      const advertencias_leves = advertencias.filter(adv => adv.gravedad === 'baja');
       
       let sugerencia_validez = 'APROBAR';
       let confianza_sugerencia = 100;
       let justificacion = '';
       
-      if (errores_graves.length > 0) {
+      // Solo rechazar si hay ERRORES CRÍTICOS reales (fechas absurdas, doc inválido, tipo desconocido)
+      if (errores.length > 0) {
         sugerencia_validez = 'RECHAZAR';
-        confianza_sugerencia = 25;
-        justificacion = `Se encontraron ${errores_graves.length} error(es) grave(s) que sugieren documento inválido o no corresponde al usuario`;
-      } else if (errores_moderados.length > 0) {
+        confianza_sugerencia = 20;
+        justificacion = `Errores críticos detectados: ${errores.join(', ')}. Se recomienda rechazar y solicitar documento corregido`;
+      } 
+      // Rechazar si usuario no coincide con el documento
+      else if (errores_graves.length > 0) {
+        sugerencia_validez = 'RECHAZAR';
+        confianza_sugerencia = 30;
+        justificacion = `Documento no corresponde al usuario: ${errores_graves.map(e => e.mensaje).join('; ')}`;
+      } 
+      // Revisar manualmente si hay advertencias moderadas (confianza baja, similitud nombre moderada)
+      else if (errores_moderados.length > 0) {
         sugerencia_validez = 'REVISAR_MANUALMENTE';
         confianza_sugerencia = 60;
-        justificacion = `Se encontraron ${errores_moderados.length} advertencia(s). Se recomienda revisión manual por GH`;
-      } else if (errores.length > 0) {
+        justificacion = `Se detectaron ${errores_moderados.length} advertencia(s) que requieren verificación: ${errores_moderados[0].mensaje}`;
+      } 
+      // Revisar manualmente si faltan campos importantes (advertencias leves)
+      else if (advertencias_leves.length > 3) {
         sugerencia_validez = 'REVISAR_MANUALMENTE';
-        confianza_sugerencia = 70;
-        justificacion = 'Documento legible pero faltan algunos campos. Revisar manualmente';
-      } else {
-        justificacion = 'Documento válido, todos los campos coinciden correctamente';
+        confianza_sugerencia = 75;
+        justificacion = `Faltan varios campos (${advertencias_leves.length} advertencias). GH debe completar información manualmente`;
+      }
+      // Revisar si hay pocas advertencias leves
+      else if (advertencias_leves.length > 0) {
+        sugerencia_validez = 'APROBAR';
+        confianza_sugerencia = 85;
+        justificacion = `Documento válido con ${advertencias_leves.length} advertencia(s) menor(es). GH puede aprobar completando campos faltantes`;
+      }
+      // Aprobar si todo está correcto
+      else {
+        justificacion = 'Documento válido, todos los campos extraídos correctamente';
       }
 
       // 8. Responder con SUGERENCIA (no bloqueo)

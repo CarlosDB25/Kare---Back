@@ -44,11 +44,16 @@ const storage = multer.diskStorage({
 // Filtro de archivos (solo imágenes y PDFs)
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf'];
   
-  if (allowedTypes.includes(file.mimetype)) {
+  const ext = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
+  
+  if (allowedTypes.includes(file.mimetype) && allowedExtensions.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Tipo de archivo no permitido. Solo se permiten imágenes (JPEG, PNG) y PDF'), false);
+    const error = new Error('Formato no soportado. Solo se aceptan: JPG, JPEG, PNG, PDF');
+    error.statusCode = 400; // Marcar como Bad Request
+    cb(error, false);
   }
 };
 

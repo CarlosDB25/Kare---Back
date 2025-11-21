@@ -12,7 +12,6 @@ export const AuthController = {
    */
   async register(req, res) {
     try {
-      // TODO: Implementar registro
       const { nombre, email, password, rol } = req.body;
 
       // Validar datos
@@ -76,7 +75,6 @@ export const AuthController = {
    */
   async login(req, res) {
     try {
-      // TODO: Implementar login
       const { email, password } = req.body;
 
       // Validar datos

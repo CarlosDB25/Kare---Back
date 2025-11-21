@@ -11,7 +11,6 @@ export const UsuarioController = {
    */
   async obtenerTodos(req, res) {
     try {
-      // TODO: Implementar
       const usuarios = await UsuarioModel.obtenerTodos();
 
       res.json({
@@ -36,7 +35,6 @@ export const UsuarioController = {
    */
   async actualizarRol(req, res) {
     try {
-      // TODO: Implementar
       const { id } = req.params;
       const { rol } = req.body;
 

@@ -43,7 +43,18 @@ router.put(
 router.post(
   '/validar-documento',
   authMiddleware,
-  upload.single('documento'),
+  (req, res, next) => {
+    upload.single('documento')(req, res, (err) => {
+      if (err) {
+        // Si es error de multer (tipo de archivo), retornar 400
+        return res.status(err.statusCode || 400).json({
+          success: false,
+          message: err.message || 'Error al procesar archivo'
+        });
+      }
+      next();
+    });
+  },
   IncapacidadController.validarDocumento
 );
 
