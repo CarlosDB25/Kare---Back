@@ -323,7 +323,7 @@ export const ReemplazoController = {
         // Notificar al colaborador de reemplazo
         await NotificacionModel.crear({
           usuario_id: reemplazo.colaborador_reemplazo_id,
-          tipo: 'reemplazo_finalizado',
+          tipo: 'success',
           titulo: 'Reemplazo finalizado',
           mensaje: `Tu reemplazo de ${reemplazo.nombre_ausente} ha finalizado. ${observaciones || ''}`,
           incapacidad_id: reemplazo.incapacidad_id
@@ -385,7 +385,7 @@ export const ReemplazoController = {
         // Notificar al colaborador de reemplazo
         await NotificacionModel.crear({
           usuario_id: reemplazo.colaborador_reemplazo_id,
-          tipo: 'reemplazo_cancelado',
+          tipo: 'warning',
           titulo: 'Reemplazo cancelado',
           mensaje: `Tu reemplazo de ${reemplazo.nombre_ausente} ha sido cancelado. Motivo: ${observaciones}`,
           incapacidad_id: reemplazo.incapacidad_id

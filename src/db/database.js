@@ -245,6 +245,39 @@ async function createDefaultUsers() {
       ibc: 3200000,
       area: 'Operaciones',
       cargo: 'Colaborador'
+    },
+    {
+      nombre: 'Carlos Rodríguez',
+      email: 'colab3@kare.com',
+      password: await bcrypt.hash('123456', saltRounds),
+      documento: '1000000006',
+      rol: 'colaborador',
+      salario_base: 2900000,
+      ibc: 2900000,
+      area: 'Operaciones',
+      cargo: 'Colaborador'
+    },
+    {
+      nombre: 'Ana Martínez',
+      email: 'colab4@kare.com',
+      password: await bcrypt.hash('123456', saltRounds),
+      documento: '1000000007',
+      rol: 'colaborador',
+      salario_base: 3100000,
+      ibc: 3100000,
+      area: 'Operaciones',
+      cargo: 'Colaborador'
+    },
+    {
+      nombre: 'Luis González',
+      email: 'colab5@kare.com',
+      password: await bcrypt.hash('123456', saltRounds),
+      documento: '1000000008',
+      rol: 'colaborador',
+      salario_base: 3050000,
+      ibc: 3050000,
+      area: 'Operaciones',
+      cargo: 'Colaborador'
     }
   ];
 

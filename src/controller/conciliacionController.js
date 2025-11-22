@@ -88,7 +88,7 @@ export const ConciliacionController = {
       // Crear notificación para el usuario de la incapacidad
       await NotificacionModel.crear({
         usuario_id: incapacidad.usuario_id,
-        tipo: 'conciliacion_creada',
+        tipo: 'success',
         titulo: 'Conciliación creada',
         mensaje: `Se ha creado la conciliación financiera de tu incapacidad. Valor total: $${calculoConciliacion.valor_total.toLocaleString('es-CO')}`,
         incapacidad_id
