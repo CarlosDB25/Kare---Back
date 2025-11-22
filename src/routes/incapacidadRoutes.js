@@ -82,4 +82,13 @@ router.get(
   IncapacidadController.obtenerDocumento
 );
 
+// DELETE /api/incapacidades/:id - Eliminar incapacidad
+// Solo GH y Conta pueden eliminar cualquier incapacidad
+// Colaboradores pueden eliminar las suyas si están en estado 'reportada'
+router.delete(
+  '/:id',
+  authMiddleware,
+  IncapacidadController.eliminar
+);
+
 export default router;

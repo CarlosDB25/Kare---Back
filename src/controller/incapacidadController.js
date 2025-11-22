@@ -654,5 +654,71 @@ export const IncapacidadController = {
         data: null
       });
     }
+  },
+
+  /**
+   * Eliminar una incapacidad
+   * DELETE /api/incapacidades/:id
+   * Solo GH y Conta pueden eliminar
+   */
+  async eliminar(req, res) {
+    try {
+      const { id } = req.params;
+      const usuario_id = req.user.id;
+      const rol = req.user.rol;
+
+      // Obtener incapacidad
+      const incapacidad = await IncapacidadModel.obtenerPorId(id);
+
+      if (!incapacidad) {
+        return res.status(404).json({
+          success: false,
+          message: 'Incapacidad no encontrada',
+          data: null
+        });
+      }
+
+      // Solo GH y Conta pueden eliminar, o el propio usuario si está en estado 'reportada'
+      const puedeEliminar = rol === 'gh' || rol === 'conta' || 
+        (incapacidad.usuario_id === usuario_id && incapacidad.estado === 'reportada');
+
+      if (!puedeEliminar) {
+        return res.status(403).json({
+          success: false,
+          message: 'No tienes permisos para eliminar esta incapacidad',
+          data: null
+        });
+      }
+
+      const db = await getDatabase();
+
+      // Eliminar historial de estados relacionado
+      await db.run('DELETE FROM historial_estados WHERE incapacidad_id = ?', [id]);
+
+      // Eliminar documento físico si existe
+      if (incapacidad.documento) {
+        const rutaArchivo = path.join(process.cwd(), 'src', 'uploads', `user_${incapacidad.usuario_id}`, incapacidad.documento);
+        if (fs.existsSync(rutaArchivo)) {
+          fs.unlinkSync(rutaArchivo);
+        }
+      }
+
+      // Eliminar incapacidad
+      await db.run('DELETE FROM incapacidades WHERE id = ?', [id]);
+
+      res.status(200).json({
+        success: true,
+        message: 'Incapacidad eliminada exitosamente',
+        data: { id: parseInt(id) }
+      });
+
+    } catch (error) {
+      console.error('Error eliminando incapacidad:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al eliminar incapacidad: ' + error.message,
+        data: null
+      });
+    }
   }
 };
