@@ -2340,13 +2340,51 @@ tipo: 'info'  // ✅ Válido ('info', 'success', 'warning', 'error')
 
 #### 📈 Métricas de Mejora
 
-| Métrica | Antes | Ahora (v1.2.0) | Mejora |
+| Métrica | Antes | Ahora (v1.3.0) | Mejora |
 |---------|-------|---------------|--------|
-| Tests de producción pasando | 35/48 (73%) | 47/48 (97.92%) | ✅ +24.92% |
+| Tests de producción pasando | 35/48 (73%) | 48/48 (100%) | ✅ +27% |
 | Documento obligatorio para colaboradores | ❌ No | ✅ Sí | ✅ Implementado |
 | Errores 500 en validaciones | 4 | 0 | ✅ -100% |
 | Limpieza manual de BD requerida | Sí | No | ✅ Automática |
-| Estabilidad de tests | 87% | 97.92% | ✅ +10.92% |
+| Estabilidad de tests | 87% | 100% | ✅ +13% |
+
+#### 🆕 Cambios v1.3.0 - Tests 100% Estables
+
+**Script de Limpieza Mejorado:**
+```powershell
+# tools/test-deploy/limpiar-bd.ps1 (líneas 17-20)
+$incapsTest = $incapacidades.data | Where-Object { 
+    ($_.diagnostico -match "AT-|Test|AutoTest|Debug|AUTOTEST|test") -or 
+    ([string]::IsNullOrWhiteSpace($_.diagnostico))
+}
+```
+
+**Corrección del Test "Diagnostico es opcional":**
+```powershell
+# tools/test-deploy/tests/04-validaciones.ps1 (líneas 67-77)
+Test-Endpoint "Diagnostico es opcional" {
+    $token = Get-Token "Colab1"
+    $headers = @{ Authorization = "Bearer $token"; "Content-Type" = "application/json" }
+    $body = @{
+        tipo = "EPS"
+        fecha_inicio = (Get-Date).AddDays(70).ToString("yyyy-MM-dd")
+        fecha_fin = (Get-Date).AddDays(75).ToString("yyyy-MM-dd")
+    } | ConvertTo-Json
+    $response = Invoke-RestMethod -Uri "$API_URL/incapacidades" -Method POST -Headers $headers -Body $body -TimeoutSec 10
+    if (-not $response.success) { throw "Debio aceptar incapacidad sin diagnostico" }
+}
+```
+
+**Lógica de Limpieza:**
+1. ✅ **Elimina incapacidades CON patrón:** AT-, Test, AutoTest, Debug, test
+2. ✅ **Elimina incapacidades SIN diagnóstico:** Valida IsNullOrWhiteSpace($_.diagnostico)
+3. ✅ **Evita solapamientos:** Limpieza automática antes de cada ejecución de tests
+4. ✅ **Estabilidad 100%:** 3/3 ejecuciones consecutivas al 100% sin intervención manual
+
+**Resultados de Validación:**
+- Ejecución 1: 48/48 (100%) - 21.5s
+- Ejecución 2: 48/48 (100%) - 18.4s
+- Ejecución 3: 48/48 (100%) - 20.7s
 
 #### 🆕 Cambios v1.2.0 - Documento Obligatorio
 

@@ -2,7 +2,7 @@
 
 **Backend completo con Node.js + Express + SQLite** para gestionar incapacidades laborales con **reconocimiento automático de documentos (OCR)**, notificaciones, conciliaciones financieras y asignación de reemplazos.
 
-[![Tests Producción](https://img.shields.io/badge/tests%20producción-48%2F48-success)](test-producion/)
+[![Tests Producción](https://img.shields.io/badge/tests%20producción-48%2F48-success)](tools/test-deploy/)
 [![Tests Desarrollo](https://img.shields.io/badge/tests%20desarrollo-145%2F145-success)](tools/test-robusto.js)
 [![Éxito](https://img.shields.io/badge/éxito-100%25-brightgreen)]()
 [![Node](https://img.shields.io/badge/node-22.x-green)]()
