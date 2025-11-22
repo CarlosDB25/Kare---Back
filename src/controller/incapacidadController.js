@@ -39,6 +39,15 @@ export const IncapacidadController = {
         });
       }
 
+      // Validar que se haya subido el documento (OBLIGATORIO)
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'El documento de soporte (PDF/JPG) es obligatorio',
+          data: null
+        });
+      }
+
       // Preparar datos para validación
       const datosIncapacidad = {
         usuario_id,
