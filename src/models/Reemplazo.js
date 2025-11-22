@@ -10,31 +10,27 @@ export default class ReemplazoModel {
   static async crear(datos) {
     const {
       incapacidad_id,
-      colaborador_ausente_id,
       colaborador_reemplazo_id,
       fecha_inicio,
       fecha_fin,
-      funciones_asignadas,
       observaciones,
-      asignado_por
+      created_by
     } = datos;
 
     const db = getDatabase();
 
     const result = await db.run(
       `INSERT INTO reemplazos (
-        incapacidad_id, colaborador_ausente_id, colaborador_reemplazo_id,
-        fecha_inicio, fecha_fin, funciones_asignadas, observaciones, asignado_por, estado
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'activo')`,
+        incapacidad_id, colaborador_reemplazo_id,
+        fecha_inicio, fecha_fin, observaciones, created_by, estado
+      ) VALUES (?, ?, ?, ?, ?, ?, 'activo')`,
       [
         incapacidad_id,
-        colaborador_ausente_id,
         colaborador_reemplazo_id,
         fecha_inicio,
         fecha_fin,
-        funciones_asignadas,
         observaciones,
-        asignado_por
+        created_by
       ]
     );
 
@@ -58,10 +54,10 @@ export default class ReemplazoModel {
         i.tipo as tipo_incapacidad,
         i.estado as estado_incapacidad
       FROM reemplazos r
-      LEFT JOIN usuarios u_ausente ON r.colaborador_ausente_id = u_ausente.id
-      LEFT JOIN usuarios u_reemplazo ON r.colaborador_reemplazo_id = u_reemplazo.id
-      LEFT JOIN usuarios u_lider ON r.asignado_por = u_lider.id
       LEFT JOIN incapacidades i ON r.incapacidad_id = i.id
+      LEFT JOIN usuarios u_ausente ON i.usuario_id = u_ausente.id
+      LEFT JOIN usuarios u_reemplazo ON r.colaborador_reemplazo_id = u_reemplazo.id
+      LEFT JOIN usuarios u_lider ON r.created_by = u_lider.id
       WHERE r.id = ?`,
       [id]
     );
@@ -74,7 +70,7 @@ export default class ReemplazoModel {
    */
   static async listar(filtros = {}) {
     const db = getDatabase();
-    const { estado, colaborador_reemplazo_id, colaborador_ausente_id } = filtros;
+    const { estado, colaborador_reemplazo_id } = filtros;
 
     let query = `
       SELECT 
@@ -83,9 +79,9 @@ export default class ReemplazoModel {
         u_reemplazo.nombre as nombre_reemplazo,
         i.tipo as tipo_incapacidad
       FROM reemplazos r
-      LEFT JOIN usuarios u_ausente ON r.colaborador_ausente_id = u_ausente.id
-      LEFT JOIN usuarios u_reemplazo ON r.colaborador_reemplazo_id = u_reemplazo.id
       LEFT JOIN incapacidades i ON r.incapacidad_id = i.id
+      LEFT JOIN usuarios u_ausente ON i.usuario_id = u_ausente.id
+      LEFT JOIN usuarios u_reemplazo ON r.colaborador_reemplazo_id = u_reemplazo.id
       WHERE 1=1
     `;
 
@@ -99,11 +95,6 @@ export default class ReemplazoModel {
     if (colaborador_reemplazo_id) {
       query += ` AND r.colaborador_reemplazo_id = ?`;
       params.push(colaborador_reemplazo_id);
-    }
-
-    if (colaborador_ausente_id) {
-      query += ` AND r.colaborador_ausente_id = ?`;
-      params.push(colaborador_ausente_id);
     }
 
     query += ` ORDER BY r.created_at DESC`;
@@ -126,8 +117,8 @@ export default class ReemplazoModel {
         i.tipo as tipo_incapacidad,
         i.diagnostico
       FROM reemplazos r
-      LEFT JOIN usuarios u_ausente ON r.colaborador_ausente_id = u_ausente.id
       LEFT JOIN incapacidades i ON r.incapacidad_id = i.id
+      LEFT JOIN usuarios u_ausente ON i.usuario_id = u_ausente.id
       WHERE r.colaborador_reemplazo_id = ? AND r.estado = 'activo'
       ORDER BY r.fecha_inicio DESC`,
       [colaborador_id]

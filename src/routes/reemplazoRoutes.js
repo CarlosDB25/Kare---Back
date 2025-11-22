@@ -17,6 +17,9 @@ router.post('/', roleMiddleware(['lider']), ReemplazoController.crear);
 // GET /api/reemplazos/estadisticas - Estadísticas (gh, conta, lider)
 router.get('/estadisticas', roleMiddleware(['gh', 'conta', 'lider']), ReemplazoController.obtenerEstadisticas);
 
+// GET /api/reemplazos/activos - Listar reemplazos activos
+router.get('/activos', ReemplazoController.listarActivos);
+
 // GET /api/reemplazos/mis-reemplazos - Mis reemplazos activos (cualquier usuario)
 router.get('/mis-reemplazos', ReemplazoController.obtenerMisReemplazos);
 

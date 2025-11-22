@@ -20,11 +20,8 @@ export const ReemplazoController = {
         colaborador_reemplazo_id,
         fecha_inicio,
         fecha_fin,
-        funciones_asignadas,
         observaciones
       } = req.body;
-
-      const asignado_por = req.user.id;
 
       // Validar datos requeridos
       if (!incapacidad_id || !colaborador_reemplazo_id || !fecha_inicio || !fecha_fin) {
@@ -82,13 +79,11 @@ export const ReemplazoController = {
       // Crear reemplazo
       const reemplazoId = await ReemplazoModel.crear({
         incapacidad_id,
-        colaborador_ausente_id: incapacidad.usuario_id,
         colaborador_reemplazo_id,
         fecha_inicio,
         fecha_fin,
-        funciones_asignadas,
         observaciones,
-        asignado_por
+        created_by: req.user.id
       });
 
       // Obtener reemplazo creado con toda la información
@@ -97,7 +92,7 @@ export const ReemplazoController = {
       // Notificar al colaborador de reemplazo
       await NotificacionModel.crear({
         usuario_id: colaborador_reemplazo_id,
-        tipo: 'reemplazo_asignado',
+        tipo: 'info',
         titulo: 'Nuevo reemplazo asignado',
         mensaje: `Se te ha asignado un reemplazo de ${reemplazo.nombre_ausente} del ${fecha_inicio} al ${fecha_fin}`,
         incapacidad_id
@@ -106,7 +101,7 @@ export const ReemplazoController = {
       // Notificar al colaborador ausente
       await NotificacionModel.crear({
         usuario_id: incapacidad.usuario_id,
-        tipo: 'reemplazo_asignado',
+        tipo: 'success',
         titulo: 'Reemplazo asignado',
         mensaje: `${colaboradorReemplazo.nombre} cubrirá tus funciones durante tu incapacidad`,
         incapacidad_id
@@ -138,28 +133,12 @@ export const ReemplazoController = {
 
       let filtros = { estado, colaborador_reemplazo_id, colaborador_ausente_id };
 
-      // Si es colaborador, solo ver sus reemplazos (como reemplazo o ausente)
-      if (rol === 'colab') {
-        const misReemplazos = await ReemplazoModel.listar({
-          ...filtros,
-          colaborador_reemplazo_id: usuarioId
-        });
-
-        const reemplazosAusente = await ReemplazoModel.listar({
-          ...filtros,
-          colaborador_ausente_id: usuarioId
-        });
-
-        // Combinar y eliminar duplicados
-        const todosReemplazos = [...misReemplazos, ...reemplazosAusente];
-        const unicos = todosReemplazos.filter((reemplazo, index, self) =>
-          index === self.findIndex((r) => r.id === reemplazo.id)
-        );
-
-        return res.json({
-          success: true,
-          message: 'Reemplazos obtenidos',
-          data: unicos
+      // Si es colaborador, no puede listar todos los reemplazos
+      if (rol === 'colaborador') {
+        return res.status(403).json({
+          success: false,
+          message: 'No tiene permisos para listar todos los reemplazos',
+          data: null
         });
       }
 
@@ -259,6 +238,52 @@ export const ReemplazoController = {
       res.status(500).json({
         success: false,
         message: 'Error al obtener reemplazos',
+        data: null
+      });
+    }
+  },
+
+  /**
+   * Listar reemplazos activos
+   * GET /api/reemplazos/activos
+   */
+  async listarActivos(req, res) {
+    try {
+      const reemplazos = await ReemplazoModel.listar({ estado: 'activo' });
+
+      res.json({
+        success: true,
+        message: 'Reemplazos activos obtenidos',
+        data: reemplazos
+      });
+    } catch (error) {
+      console.error('Error listando reemplazos activos:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al listar reemplazos activos',
+        data: null
+      });
+    }
+  },
+
+  /**
+   * Listar reemplazos activos
+   * GET /api/reemplazos/activos
+   */
+  async listarActivos(req, res) {
+    try {
+      const reemplazos = await ReemplazoModel.listar({ estado: 'activo' });
+
+      res.json({
+        success: true,
+        message: 'Reemplazos activos obtenidos',
+        data: reemplazos
+      });
+    } catch (error) {
+      console.error('Error listando reemplazos activos:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al listar reemplazos activos',
         data: null
       });
     }

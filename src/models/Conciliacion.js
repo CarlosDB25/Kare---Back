@@ -54,10 +54,11 @@ export default class ConciliacionModel {
     const conciliacion = await db.get(
       `SELECT 
         c.*,
-        u.nombre as conciliado_por_nombre,
-        u.rol as conciliado_por_rol
+        i.tipo as incapacidad_tipo,
+        u.nombre as colaborador_nombre
        FROM conciliaciones c
-       INNER JOIN usuarios u ON c.conciliado_por = u.id
+       INNER JOIN incapacidades i ON c.incapacidad_id = i.id
+       INNER JOIN usuarios u ON i.usuario_id = u.id
        WHERE c.incapacidad_id = ?`,
       [incapacidad_id]
     );
@@ -95,21 +96,14 @@ export default class ConciliacionModel {
       SELECT 
         c.*,
         i.tipo as incapacidad_tipo,
-        u_colab.nombre as colaborador_nombre,
-        u_conciliador.nombre as conciliado_por_nombre
+        u_colab.nombre as colaborador_nombre
       FROM conciliaciones c
       INNER JOIN incapacidades i ON c.incapacidad_id = i.id
       INNER JOIN usuarios u_colab ON i.usuario_id = u_colab.id
-      INNER JOIN usuarios u_conciliador ON c.conciliado_por = u_conciliador.id
       WHERE 1=1
     `;
     
     const params = [];
-    
-    if (filtros.conciliado_por) {
-      query += ` AND c.conciliado_por = ?`;
-      params.push(filtros.conciliado_por);
-    }
     
     if (filtros.fecha_desde) {
       query += ` AND DATE(c.created_at) >= ?`;
@@ -135,10 +129,10 @@ export default class ConciliacionModel {
     const stats = await db.get(`
       SELECT 
         COUNT(*) as total_conciliaciones,
-        SUM(valor_total) as valor_total_conciliado,
-        AVG(valor_total) as valor_promedio,
-        SUM(valor_empresa) as total_pagado_empresa,
-        SUM(valor_eps) as total_pagado_eps,
+        SUM(total_a_pagar) as valor_total_conciliado,
+        AVG(total_a_pagar) as valor_promedio,
+        SUM(monto_empresa_67) as total_pagado_empresa,
+        SUM(monto_eps_100) as total_pagado_eps,
         AVG(dias_incapacidad) as promedio_dias
       FROM conciliaciones
     `);
@@ -311,6 +305,8 @@ export function calcularConciliacion(incapacidad, usuario) {
     dias_eps,
     porcentaje_eps: dias_eps > 0 ? (tipo === 'EPS' && dias_incapacidad >= 91 ? 58.34 : 66.67) : 0, // Promedio ponderado si aplica tramo de 50%
     valor_eps: Math.round(valor_eps * 100) / 100,
+    dias_arl,
+    valor_arl: Math.round(valor_arl * 100) / 100,
     valor_total: Math.round(valor_total * 100) / 100,
     desglose_detallado: desglose,
     normativa_aplicada: tipo === 'EPS' ? 'Enfermedad General - Origen Común' : 

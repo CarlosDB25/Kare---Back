@@ -74,16 +74,15 @@ export const ConciliacionController = {
         dias_incapacidad: incapacidad.dias_incapacidad,
         salario_base: usuario.salario_base || 0,
         ibc: usuario.ibc || usuario.salario_base || 0,
-        dias_empresa: calculoConciliacion.dias_empresa,
-        dias_eps: calculoConciliacion.dias_eps,
         valor_dia: calculoConciliacion.valor_dia,
-        valor_empresa: calculoConciliacion.valor_empresa,
-        valor_eps: calculoConciliacion.valor_eps,
-        valor_total: calculoConciliacion.valor_total,
-        porcentaje_empresa: calculoConciliacion.porcentaje_empresa,
-        porcentaje_eps: calculoConciliacion.porcentaje_eps,
-        observaciones: calculoConciliacion.observaciones,
-        conciliado_por: creado_por
+        dias_eps_100: calculoConciliacion.dias_eps || 0,
+        monto_eps_100: calculoConciliacion.valor_eps || 0,
+        dias_empresa_67: calculoConciliacion.dias_empresa || 0,
+        monto_empresa_67: calculoConciliacion.valor_empresa || 0,
+        dias_arl_100: calculoConciliacion.dias_arl || 0,
+        monto_arl_100: calculoConciliacion.valor_arl || 0,
+        total_a_pagar: calculoConciliacion.valor_total,
+        observaciones: calculoConciliacion.observaciones
       });
 
       // Crear notificación para el usuario de la incapacidad

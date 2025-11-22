@@ -55,14 +55,14 @@ export function validarFechas(fecha_inicio, fecha_fin) {
     };
   }
 
-  // Validar que fecha_fin no sea muy futura (máximo 365 días adelante - 1 año)
-  const en365Dias = new Date();
-  en365Dias.setDate(en365Dias.getDate() + 365);
+  // Validar que fecha_inicio no sea muy futura (máximo 90 días adelante)
+  const en90Dias = new Date();
+  en90Dias.setDate(en90Dias.getDate() + 90);
   
-  if (fin > en365Dias) {
+  if (inicio > en90Dias) {
     return {
       valido: false,
-      mensaje: 'La fecha de fin no puede ser mayor a 1 año en el futuro'
+      mensaje: 'La fecha de inicio no puede ser mayor a 90 días en el futuro'
     };
   }
 
