@@ -39,6 +39,14 @@ export const IncapacidadController = {
         });
       }
 
+      if (!diagnostico || diagnostico.trim() === '') {
+        return res.status(400).json({
+          success: false,
+          message: 'El diagnostico es obligatorio',
+          data: null
+        });
+      }
+
       // Preparar datos para validación
       const datosIncapacidad = {
         usuario_id,
@@ -219,7 +227,7 @@ export const IncapacidadController = {
           incapacidad_id: id,
           estado_anterior: estadoAnterior,
           estado_nuevo: estadoActualizar,
-          cambiado_por: req.user.id,
+          usuario_cambio_id: req.user.id,
           observaciones
         });
 

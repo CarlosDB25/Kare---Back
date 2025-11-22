@@ -12,7 +12,7 @@ export default class HistorialEstadoModel {
       incapacidad_id, 
       estado_anterior, 
       estado_nuevo, 
-      cambiado_por, 
+      usuario_cambio_id, 
       observaciones 
     } = datos;
     
@@ -20,9 +20,9 @@ export default class HistorialEstadoModel {
     
     const result = await db.run(
       `INSERT INTO historial_estados 
-       (incapacidad_id, estado_anterior, estado_nuevo, cambiado_por, observaciones)
+       (incapacidad_id, estado_anterior, estado_nuevo, usuario_cambio_id, observaciones)
        VALUES (?, ?, ?, ?, ?)`,
-      [incapacidad_id, estado_anterior, estado_nuevo, cambiado_por, observaciones || null]
+      [incapacidad_id, estado_anterior, estado_nuevo, usuario_cambio_id, observaciones || null]
     );
     
     return result.lastID;
@@ -40,7 +40,7 @@ export default class HistorialEstadoModel {
         u.nombre as cambiado_por_nombre,
         u.rol as cambiado_por_rol
        FROM historial_estados h
-       INNER JOIN usuarios u ON h.cambiado_por = u.id
+       LEFT JOIN usuarios u ON h.usuario_cambio_id = u.id
        WHERE h.incapacidad_id = ?
        ORDER BY h.created_at DESC`,
       [incapacidad_id]
@@ -60,7 +60,7 @@ export default class HistorialEstadoModel {
         h.*,
         u.nombre as cambiado_por_nombre
        FROM historial_estados h
-       INNER JOIN usuarios u ON h.cambiado_por = u.id
+       LEFT JOIN usuarios u ON h.usuario_cambio_id = u.id
        WHERE h.incapacidad_id = ?
        ORDER BY h.created_at DESC
        LIMIT 1`,
