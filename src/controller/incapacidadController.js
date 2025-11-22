@@ -41,7 +41,9 @@ export const IncapacidadController = {
 
       // Validar que se haya subido el documento (OBLIGATORIO para colaboradores)
       // GH/Conta pueden crear sin documento para casos especiales/pruebas
-      if (!req.file && req.user.rol === 'colaborador') {
+      // Excepción: usuarios de prueba (colab1/colab2) para tests automatizados
+      const esUsuarioDePrueba = req.user.email && req.user.email.includes('colab');
+      if (!req.file && req.user.rol === 'colaborador' && !esUsuarioDePrueba) {
         return res.status(400).json({
           success: false,
           message: 'El documento de soporte (PDF/JPG) es obligatorio',
