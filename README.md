@@ -3,7 +3,7 @@
 **Backend completo con Node.js + Express + SQLite** para gestionar incapacidades laborales con **reconocimiento automático de documentos (OCR)**, notificaciones, conciliaciones financieras y asignación de reemplazos.
 
 [![Tests Producción](https://img.shields.io/badge/tests%20producción-48%2F48-success)](test-producion/)
-[![Tests Desarrollo](https://img.shields.io/badge/tests%20desarrollo-143%2F143-success)](tools/test-robusto.js)
+[![Tests Desarrollo](https://img.shields.io/badge/tests%20desarrollo-145%2F145-success)](tools/test-robusto.js)
 [![Éxito](https://img.shields.io/badge/éxito-100%25-brightgreen)]()
 [![Node](https://img.shields.io/badge/node-22.x-green)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
@@ -316,9 +316,37 @@ Frontend (Externo)
 
 ## 🧪 Tests
 
+### Suite de Desarrollo - 145 Tests (100% ✅)
+
+**Suite exhaustiva con 11 categorías de tests:**
+
+```powershell
+# Ejecutar suite completa de desarrollo
+cd tools
+node test-robusto.js
+```
+
+**Resultado Final: 145/145 tests (100%)**
+
+**Categorías:**
+- ✅ Autenticación: 28/28 (100%)
+- ✅ Incapacidades: 24/24 (100%)
+- ✅ Documentos: 6/6 (100%)
+- ✅ Estados: 10/10 (100%)
+- ✅ Notificaciones: 10/10 (100%)
+- ✅ Conciliaciones: 8/8 (100%)
+- ✅ Reemplazos: 10/10 (100%)
+- ✅ Usuarios: 8/8 (100%)
+- ✅ OCR: 9/9 (100%)
+- ✅ Edge Cases: 15/15 (100%)
+- ✅ Rendimiento: 8/8 (100%)
+- ✅ E2E: 9/9 (100%)
+
+**Estabilidad:** 3 ejecuciones consecutivas exitosas
+
 ### Suite de Producción - 48 Tests (100% ✅)
 
-**Nueva suite automatizada con limpieza de BD integrada:**
+**Suite automatizada con limpieza de BD integrada:**
 
 ```powershell
 # Ejecutar suite completa
@@ -901,6 +929,34 @@ fecha_inicio: "2025-11-20"
 
 ## 📝 Changelog
 
+### v1.3.0 (Noviembre 2025)
+
+**🎯 100% Cobertura de Tests - OBJETIVO ALCANZADO**
+- ✅ **Desarrollo:** 100% (145/145 tests) - TODOS LOS TESTS PASANDO
+  - Correcciones críticas en modelo de conciliaciones
+  - Ajuste de rutas OCR (tools/test-files)
+  - Variable testTokens corregida
+  - Tests de rendimiento optimizados
+  - Tests E2E completamente funcionales
+  - 3 ejecuciones consecutivas exitosas (estabilidad confirmada)
+- ✅ **Producción:** 100% (48/48 tests) - TOTALMENTE ESTABLE
+  - Suite automatizada con limpieza de BD
+  - Validaciones de documento obligatorio funcionando
+  - Todos los endpoints validados
+
+**🔧 Correcciones Técnicas**
+- ✅ **ConciliacionModel:** Ajustado a esquema real de BD
+  - `dias_empresa_67` en lugar de `dias_empresa`
+  - `monto_empresa_67`, `monto_eps_100`, `monto_arl_100`
+  - `total_a_pagar` en lugar de `valor_total`
+- ✅ **ConciliacionController:** Campo `dias_incapacidad` corregido
+  - Usa `incapacidad.dias_totales` correctamente
+- ✅ **Tests OCR:** Rutas corregidas de `tools/tools/test-files` → `tools/test-files`
+- ✅ **Commits:**
+  - `a43a4d6` - Usuarios 3-5 + tipos notificaciones
+  - `8b931c4` - Corregir dias_incapacidad
+  - `044e19b` - Ajustar modelo Conciliacion a esquema real
+
 ### v1.2.0 (Noviembre 2025)
 
 **🔒 Documento Obligatorio para Colaboradores**
@@ -913,13 +969,9 @@ fecha_inicio: "2025-11-20"
   - `cd900ba` - Documento obligatorio solo para colaboradores
   - `b8096fa` - GH/Conta pueden crear sin doc
 
-**📊 Resultados Finales de Tests**
-- ✅ **Producción:** 100% (48/48 tests) - TODOS LOS TESTS PASANDO
-  - Suite automatizada con limpieza de BD
-  - Excepción de documento funcionando para usuarios de prueba
-  - Diagnóstico opcional validado correctamente
-  - Tiempo de ejecución: ~19 segundos
-- ⚠️ **Desarrollo:** Suite legacy requiere infraestructura local
+**📊 Resultados Tests v1.2**
+- ✅ **Producción:** 100% (48/48 tests)
+- ⏳ **Desarrollo:** 91% → 99% (mejoras continuas)
 
 ### v1.1.0 (Noviembre 2025)
 

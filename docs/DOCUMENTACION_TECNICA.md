@@ -1,9 +1,13 @@
 # 📘 DOCUMENTACIÓN TÉCNICA - SISTEMA KARE
 
 **Sistema de Gestión de Incapacidades Laborales**  
-**Versión:** 1.2.0  
+**Versión:** 1.3.0  
 **Fecha:** Noviembre 2025  
 **Última actualización:** 22 de Noviembre 2025
+
+**Estado de Tests:**
+- ✅ **Desarrollo:** 100% (145/145 tests)
+- ✅ **Producción:** 100% (48/48 tests)
 
 ---
 
@@ -2411,29 +2415,31 @@ if (!req.file && req.user.rol === 'colaborador' && !esUsuarioDePrueba) {
 
 | Métrica | Valor | Estado |
 |---------|-------|--------|
+| **Tests de desarrollo** | 145/145 (100%) | ✅ PERFECTO |
 | **Tests de producción** | 48/48 (100%) | ✅ PERFECTO |
-| **Tests de desarrollo** | 143/143 | ✅ 100% (Legacy) |
+| **Estabilidad desarrollo** | 3/3 consecutivas | ✅ Confirmada |
 | **Cobertura funcional** | Completa | ✅ 100% |
 | **Endpoints documentados** | 35/35 | ✅ 100% |
 | **Validaciones implementadas** | 19/19 | ✅ 100% |
 | **Tiempo de respuesta (prod)** | <5s | ✅ Óptimo |
 | **Seguridad** | JWT + roles | ✅ Robusta |
 | **Errores 500** | 0 | ✅ Eliminados |
-| **Estabilidad de tests producción** | 100% | ✅ Consistente |
 | **Documento obligatorio** | Implementado | ✅ Activo |
 
-**🎉 LOGRO:** 48/48 tests de producción pasando (100%) - diagnóstico opcional validado correctamente.
+**🎉 LOGRO v1.3.0:** 145/145 tests de desarrollo + 48/48 producción = **100% TOTAL**
 
 ### Recomendaciones de Uso
 
-1. **Ejecutar tests de producción** antes de cada despliegue usando `ejecutar-todos.ps1`
-2. **Limpiar BD** periódicamente con `limpiar-bd.ps1` si se acumulan datos
-3. **Revisar logs** de Render.com para detectar patrones
-4. **Actualizar tokens JWT** con período de expiración apropiado (24h actual)
-5. **Realizar backups** de la BD regularmente
-6. **Usar DELETE** con precaución (solo GH/Conta o dueño en estado reportada)
-7. **Validar diagnóstico** siempre antes de crear incapacidades
-8. **Monitorear notificaciones** para asegurar tipos válidos
+1. **Ejecutar tests de desarrollo** usando `node tools/test-robusto.js` (145 tests)
+2. **Ejecutar tests de producción** antes de cada despliegue usando `ejecutar-todos.ps1` (48 tests)
+3. **Limpiar BD** periódicamente con `limpiar-bd.ps1` si se acumulan datos
+4. **Revisar logs** de Render.com para detectar patrones
+5. **Actualizar tokens JWT** con período de expiración apropiado (24h actual)
+6. **Realizar backups** de la BD regularmente
+7. **Usar DELETE** con precaución (solo GH/Conta o dueño en estado reportada)
+8. **Validar diagnóstico** siempre antes de crear incapacidades
+9. **Monitorear notificaciones** para asegurar tipos válidos
+10. **Validar modelo Conciliacion** usa columnas correctas (dias_empresa_67, monto_eps_100, etc.)
 
 ---
 
