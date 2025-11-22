@@ -71,7 +71,7 @@ export const ConciliacionController = {
       // Crear conciliación en la base de datos
       const id = await ConciliacionModel.crear({
         incapacidad_id,
-        dias_incapacidad: incapacidad.dias_incapacidad,
+        dias_incapacidad: incapacidad.dias_totales || incapacidad.dias || 0,
         salario_base: usuario.salario_base || 0,
         ibc: usuario.ibc || usuario.salario_base || 0,
         valor_dia: calculoConciliacion.valor_dia,
