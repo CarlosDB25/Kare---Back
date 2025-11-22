@@ -39,14 +39,6 @@ export const IncapacidadController = {
         });
       }
 
-      if (!diagnostico || diagnostico.trim() === '') {
-        return res.status(400).json({
-          success: false,
-          message: 'El diagnostico es obligatorio',
-          data: null
-        });
-      }
-
       // Preparar datos para validación
       const datosIncapacidad = {
         usuario_id,
@@ -54,7 +46,7 @@ export const IncapacidadController = {
         fecha_inicio,
         fecha_fin,
         dias: dias || calcularDias(fecha_inicio, fecha_fin),
-        diagnostico,
+        diagnostico: diagnostico || '',
         observaciones
       };
 
