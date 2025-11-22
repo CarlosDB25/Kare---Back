@@ -62,12 +62,12 @@ export const IncapacidadController = {
       }
 
       // Verificar si se subió un archivo
-      const documento = req.file ? req.file.filename : null;
+      const documento_url = req.file ? req.file.filename : null;
 
       // Crear incapacidad con datos validados
       const incapacidadId = await IncapacidadModel.crear({
         ...validacion.datos,
-        documento
+        documento_url
       });
 
       // Obtener incapacidad creada
@@ -317,6 +317,7 @@ export const IncapacidadController = {
         }
       }
 
+      // Validar documento solo si el usuario tiene el campo (BD nueva)
       if (campos.documento && usuario.documento) {
         if (campos.documento !== usuario.documento.toString()) {
           advertencias.push({
@@ -408,7 +409,7 @@ export const IncapacidadController = {
             documento: campos.documento,
             fecha_inicio: campos.fecha_inicio,
             fecha_fin: campos.fecha_fin,
-            dias_incapacidad: campos.dias_incapacidad,
+            dias_totales: campos.dias_totales,
             diagnostico: campos.diagnostico,
             numero_radicado: campos.numero_radicado,
             entidad: campos.entidad
@@ -517,7 +518,7 @@ export const IncapacidadController = {
       // Actualizar documento en la incapacidad
       const db = getDatabase();
       await db.run(
-        'UPDATE incapacidades SET documento = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        'UPDATE incapacidades SET documento_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [nombreArchivo, id]
       );
 
@@ -584,7 +585,7 @@ export const IncapacidadController = {
       }
 
       // Verificar que hay documento
-      if (!incapacidad.documento) {
+      if (!incapacidad.documento_url) {
         return res.status(404).json({
           success: false,
           message: 'Esta incapacidad no tiene documento adjunto',
@@ -603,16 +604,16 @@ export const IncapacidadController = {
 
       // Construir ruta del archivo
       // Primero intentar en la carpeta del usuario
-      let rutaArchivo = path.join(process.cwd(), 'src', 'uploads', `user_${incapacidad.usuario_id}`, incapacidad.documento);
+      let rutaArchivo = path.join(process.cwd(), 'src', 'uploads', `user_${incapacidad.usuario_id}`, incapacidad.documento_url);
       
       // Si no existe, buscar en la carpeta raíz de uploads (archivos antiguos)
       if (!fs.existsSync(rutaArchivo)) {
-        rutaArchivo = path.join(process.cwd(), 'src', 'uploads', incapacidad.documento);
+        rutaArchivo = path.join(process.cwd(), 'src', 'uploads', incapacidad.documento_url);
       }
 
       // Si aún no existe, buscar en temp
       if (!fs.existsSync(rutaArchivo)) {
-        rutaArchivo = path.join(process.cwd(), 'src', 'uploads', 'temp', incapacidad.documento);
+        rutaArchivo = path.join(process.cwd(), 'src', 'uploads', 'temp', incapacidad.documento_url);
       }
 
       // Verificar que el archivo existe
@@ -626,7 +627,7 @@ export const IncapacidadController = {
 
       // Obtener información del archivo
       const stats = fs.statSync(rutaArchivo);
-      const extension = path.extname(incapacidad.documento).toLowerCase();
+      const extension = path.extname(incapacidad.documento_url).toLowerCase();
 
       // Determinar tipo MIME
       let mimeType = 'application/octet-stream';
@@ -640,7 +641,7 @@ export const IncapacidadController = {
 
       // Enviar archivo
       res.setHeader('Content-Type', mimeType);
-      res.setHeader('Content-Disposition', `inline; filename="${incapacidad.documento}"`);
+      res.setHeader('Content-Disposition', `inline; filename="${incapacidad.documento_url}"`);
       res.setHeader('Content-Length', stats.size);
 
       const stream = fs.createReadStream(rutaArchivo);
@@ -696,8 +697,8 @@ export const IncapacidadController = {
       await db.run('DELETE FROM historial_estados WHERE incapacidad_id = ?', [id]);
 
       // Eliminar documento físico si existe
-      if (incapacidad.documento) {
-        const rutaArchivo = path.join(process.cwd(), 'src', 'uploads', `user_${incapacidad.usuario_id}`, incapacidad.documento);
+      if (incapacidad.documento_url) {
+        const rutaArchivo = path.join(process.cwd(), 'src', 'uploads', `user_${incapacidad.usuario_id}`, incapacidad.documento_url);
         if (fs.existsSync(rutaArchivo)) {
           fs.unlinkSync(rutaArchivo);
         }

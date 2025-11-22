@@ -64,6 +64,7 @@ async function createTables() {
       nombre TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
+      documento TEXT,
       rol TEXT NOT NULL CHECK(rol IN ('gh', 'conta', 'lider', 'colaborador')),
       salario_base REAL,
       ibc REAL,
@@ -194,6 +195,7 @@ async function createDefaultUsers() {
       nombre: 'Admin GH',
       email: 'gh@kare.com',
       password: await bcrypt.hash('123456', saltRounds),
+      documento: '1000000001',
       rol: 'gh',
       salario_base: 5000000,
       ibc: 5000000,
@@ -204,6 +206,7 @@ async function createDefaultUsers() {
       nombre: 'Contador Principal',
       email: 'conta@kare.com',
       password: await bcrypt.hash('123456', saltRounds),
+      documento: '1000000002',
       rol: 'conta',
       salario_base: 4500000,
       ibc: 4500000,
@@ -214,6 +217,7 @@ async function createDefaultUsers() {
       nombre: 'Líder de Equipo',
       email: 'lider1@kare.com',
       password: await bcrypt.hash('123456', saltRounds),
+      documento: '1000000003',
       rol: 'lider',
       salario_base: 4000000,
       ibc: 4000000,
@@ -224,6 +228,7 @@ async function createDefaultUsers() {
       nombre: 'Juan Pérez',
       email: 'colab1@kare.com',
       password: await bcrypt.hash('123456', saltRounds),
+      documento: '1000000004',
       rol: 'colaborador',
       salario_base: 3000000,
       ibc: 3000000,
@@ -234,6 +239,7 @@ async function createDefaultUsers() {
       nombre: 'María García',
       email: 'colab2@kare.com',
       password: await bcrypt.hash('123456', saltRounds),
+      documento: '1000000005',
       rol: 'colaborador',
       salario_base: 3200000,
       ibc: 3200000,
@@ -244,9 +250,9 @@ async function createDefaultUsers() {
 
   for (const usuario of usuarios) {
     await db.run(`
-      INSERT INTO usuarios (nombre, email, password, rol, salario_base, ibc, area, cargo)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [usuario.nombre, usuario.email, usuario.password, usuario.rol, usuario.salario_base, usuario.ibc, usuario.area, usuario.cargo]);
+      INSERT INTO usuarios (nombre, email, password, documento, rol, salario_base, ibc, area, cargo)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [usuario.nombre, usuario.email, usuario.password, usuario.documento, usuario.rol, usuario.salario_base, usuario.ibc, usuario.area, usuario.cargo]);
   }
 
   console.log('[DB] Usuarios de prueba creados exitosamente');

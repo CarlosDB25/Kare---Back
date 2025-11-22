@@ -223,7 +223,7 @@ function extraerCampos(texto, tipo) {
     fecha_fin: fechas[1] || null,         // Segunda fecha encontrada
     diagnostico,
     numero_radicado,
-    dias_incapacidad: dias,
+    dias_totales: dias,
     entidad,
     texto_completo: texto.substring(0, 500) // Primeros 500 caracteres para referencia
   };
