@@ -16,29 +16,30 @@ export default class ConciliacionModel {
       salario_base,
       ibc,
       valor_dia,
-      dias_empresa,
-      porcentaje_empresa,
-      valor_empresa,
-      dias_eps,
-      porcentaje_eps,
-      valor_eps,
-      valor_total,
-      observaciones,
-      conciliado_por
+      dias_empresa_67,
+      monto_empresa_67,
+      dias_eps_100,
+      monto_eps_100,
+      dias_arl_100,
+      monto_arl_100,
+      total_a_pagar,
+      observaciones
     } = datos;
     
     const result = await db.run(
       `INSERT INTO conciliaciones 
        (incapacidad_id, dias_incapacidad, salario_base, ibc, valor_dia,
-        dias_empresa, porcentaje_empresa, valor_empresa,
-        dias_eps, porcentaje_eps, valor_eps,
-        valor_total, observaciones, conciliado_por)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        dias_empresa_67, monto_empresa_67,
+        dias_eps_100, monto_eps_100,
+        dias_arl_100, monto_arl_100,
+        total_a_pagar, observaciones)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         incapacidad_id, dias_incapacidad, salario_base, ibc, valor_dia,
-        dias_empresa, porcentaje_empresa, valor_empresa,
-        dias_eps, porcentaje_eps, valor_eps,
-        valor_total, observaciones || null, conciliado_por
+        dias_empresa_67 || 0, monto_empresa_67 || 0,
+        dias_eps_100 || 0, monto_eps_100 || 0,
+        dias_arl_100 || 0, monto_arl_100 || 0,
+        total_a_pagar, observaciones || null
       ]
     );
     
