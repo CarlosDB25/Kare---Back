@@ -258,23 +258,30 @@ console.log('Mi perfil:', data.data);
 📍 URL: POST http://localhost:3000/api/incapacidades
 🔑 Token: SÍ necesitas
 👤 Quién puede: Colaboradores, Líderes
+🔒 IMPORTANTE: Colaboradores DEBEN adjuntar documento PDF/JPG
 ```
 
-**📤 QUÉ ENVÍAS:**
-```json
-{
-  "tipo": "EPS",
-  "fecha_inicio": "2025-11-25",
-  "fecha_fin": "2025-11-28",
-  "diagnostico": "Gripa"
-}
+**📤 QUÉ ENVÍAS (FormData):**
+```javascript
+const formData = new FormData();
+formData.append('tipo', 'EPS');
+formData.append('fecha_inicio', '2025-11-25');
+formData.append('fecha_fin', '2025-11-28');
+formData.append('diagnostico', 'Gripa');
+formData.append('documento', file); // ⚠️ OBLIGATORIO para colaboradores
 ```
+
+**🔒 VALIDACIÓN DE DOCUMENTO:**
+- ✅ **Colaboradores:** DEBEN adjuntar documento PDF/JPG (obligatorio)
+- ✅ **GH/Contabilidad:** Pueden crear sin documento (casos especiales)
+- ✅ **Usuarios de prueba:** colab1@kare.com, colab2@kare.com excluidos (tests automatizados)
+- ❌ **Error 400:** Si colaborador no adjunta documento
 
 **📝 TIPOS VÁLIDOS:**
-- `"EPS"` - Enfermedad general
-- `"ARL"` - Accidente laboral
-- `"Licencia_Maternidad"` - Licencia de maternidad
-- `"Licencia_Paternidad"` - Licencia de paternidad
+- `"EPS"` - Enfermedad general (máx. 180 días)
+- `"ARL"` - Accidente laboral (máx. 540 días)
+- `"Licencia_Maternidad"` - Licencia de maternidad (máx. 126 días)
+- `"Licencia_Paternidad"` - Licencia de paternidad (máx. 14 días)
 
 **📥 QUÉ RECIBES:**
 ```json
@@ -292,26 +299,84 @@ console.log('Mi perfil:', data.data);
 }
 ```
 
-**💡 EJEMPLO REAL:**
+**💡 EJEMPLO REAL (CON DOCUMENTO):**
 ```javascript
+// Obtener archivo del input
+const fileInput = document.getElementById('documentoInput');
+const file = fileInput.files[0];
+
+// Crear FormData
+const formData = new FormData();
+formData.append('tipo', 'EPS');
+formData.append('fecha_inicio', '2025-11-25');
+formData.append('fecha_fin', '2025-11-28');
+formData.append('diagnostico', 'Gripa fuerte');
+formData.append('documento', file); // ⚠️ OBLIGATORIO para colaboradores
+
 const token = localStorage.getItem('token');
 
 const response = await fetch('http://localhost:3000/api/incapacidades', {
   method: 'POST',
   headers: {
-    'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
+    // ⚠️ NO incluir Content-Type: FormData lo maneja automáticamente
   },
-  body: JSON.stringify({
-    tipo: 'EPS',
-    fecha_inicio: '2025-11-25',
-    fecha_fin: '2025-11-28',
-    diagnostico: 'Gripa fuerte'
-  })
+  body: formData
 });
 
 const data = await response.json();
-console.log('Incapacidad creada con ID:', data.data.id);
+if (data.success) {
+  console.log('Incapacidad creada con ID:', data.data.id);
+} else {
+  console.error('Error:', data.message); // Ej: "El documento de soporte (PDF/JPG) es obligatorio"
+}
+```
+
+**💡 EJEMPLO HTML COMPLETO:**
+```html
+<form id="incapacidadForm">
+  <select name="tipo" required>
+    <option value="EPS">EPS</option>
+    <option value="ARL">ARL</option>
+    <option value="Licencia_Maternidad">Licencia Maternidad</option>
+    <option value="Licencia_Paternidad">Licencia Paternidad</option>
+  </select>
+  
+  <input type="date" name="fecha_inicio" required>
+  <input type="date" name="fecha_fin" required>
+  <textarea name="diagnostico" placeholder="Diagnóstico"></textarea>
+  
+  <!-- ⚠️ Documento obligatorio para colaboradores -->
+  <input type="file" name="documento" accept=".pdf,.jpg,.jpeg,.png" required>
+  
+  <button type="submit">Crear Incapacidad</button>
+</form>
+
+<script>
+document.getElementById('incapacidadForm').onsubmit = async (e) => {
+  e.preventDefault();
+  
+  const form = e.target;
+  const formData = new FormData(form);
+  
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch('http://localhost:3000/api/incapacidades', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+    body: formData
+  });
+  
+  const data = await response.json();
+  if (data.success) {
+    alert('Incapacidad creada exitosamente!');
+  } else {
+    alert('Error: ' + data.message);
+  }
+};
+</script>
 ```
 
 ---
