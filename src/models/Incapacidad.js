@@ -24,11 +24,11 @@ export const IncapacidadModel = {
 
     const result = await db.run(
       `INSERT INTO incapacidades 
-       (usuario_id, tipo, fecha_inicio, fecha_fin, dias_totales, diagnostico, 
-        documento_url, observaciones, estado) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (usuario_id, tipo, fecha_inicio, fecha_fin, dias_incapacidad, diagnostico, 
+        documento, observaciones, porcentaje_pago, entidad_pagadora, estado) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [usuario_id, tipo, fecha_inicio, fecha_fin, dias, diagnostico, 
-       documento, observaciones, 'reportada']
+       documento, observaciones, porcentaje_pago, entidad_pagadora, 'reportada']
     );
 
     return result.lastID;
@@ -40,7 +40,7 @@ export const IncapacidadModel = {
   async obtenerPorUsuario(usuarioId) {
     const db = getDatabase();
     return await db.all(
-      'SELECT * FROM incapacidades WHERE usuario_id = ? ORDER BY created_at DESC',
+      'SELECT id, usuario_id, tipo, fecha_inicio, fecha_fin, dias_incapacidad as dias, diagnostico, documento, estado, observaciones, porcentaje_pago, entidad_pagadora, created_at, updated_at FROM incapacidades WHERE usuario_id = ? ORDER BY created_at DESC',
       [usuarioId]
     );
   },
@@ -51,7 +51,11 @@ export const IncapacidadModel = {
   async obtenerTodas() {
     const db = getDatabase();
     return await db.all(`
-      SELECT i.*, u.nombre as usuario_nombre, u.email as usuario_email 
+      SELECT i.id, i.usuario_id, i.tipo, i.fecha_inicio, i.fecha_fin, 
+             i.dias_incapacidad as dias, i.diagnostico, i.documento, i.estado, 
+             i.observaciones, i.porcentaje_pago, i.entidad_pagadora, 
+             i.created_at, i.updated_at,
+             u.nombre as usuario_nombre, u.email as usuario_email 
       FROM incapacidades i 
       LEFT JOIN usuarios u ON i.usuario_id = u.id 
       ORDER BY i.created_at DESC
@@ -64,7 +68,7 @@ export const IncapacidadModel = {
   async obtenerPorId(id) {
     const db = getDatabase();
     return await db.get(
-      'SELECT * FROM incapacidades WHERE id = ?',
+      'SELECT id, usuario_id, tipo, fecha_inicio, fecha_fin, dias_incapacidad as dias, diagnostico, documento, estado, observaciones, porcentaje_pago, entidad_pagadora, created_at, updated_at FROM incapacidades WHERE id = ?',
       [id]
     );
   },
@@ -96,7 +100,7 @@ export const IncapacidadModel = {
   async obtenerPorEstado(estado) {
     const db = getDatabase();
     return await db.all(
-      'SELECT * FROM incapacidades WHERE estado = ? ORDER BY created_at DESC',
+      'SELECT id, usuario_id, tipo, fecha_inicio, fecha_fin, dias_incapacidad as dias, diagnostico, documento, estado, observaciones, porcentaje_pago, entidad_pagadora, created_at, updated_at FROM incapacidades WHERE estado = ? ORDER BY created_at DESC',
       [estado]
     );
   }

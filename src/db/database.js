@@ -83,10 +83,12 @@ async function createTables() {
       diagnostico TEXT NOT NULL,
       fecha_inicio DATE NOT NULL,
       fecha_fin DATE NOT NULL,
-      dias_totales INTEGER NOT NULL,
+      dias_incapacidad INTEGER NOT NULL,
       estado TEXT DEFAULT 'reportada' CHECK(estado IN ('reportada', 'en_revision', 'validada', 'rechazada', 'pagada')),
-      documento_url TEXT,
+      documento TEXT,
       observaciones TEXT,
+      porcentaje_pago REAL,
+      entidad_pagadora TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
@@ -238,6 +240,36 @@ async function createDefaultUsers() {
       salario_base: 3200000,
       ibc: 3200000,
       area: 'Operaciones',
+      cargo: 'Colaborador'
+    },
+    {
+      nombre: 'Carlos Rodríguez',
+      email: 'colab3@kare.com',
+      password: await bcrypt.hash('123456', saltRounds),
+      rol: 'colaborador',
+      salario_base: 3100000,
+      ibc: 3100000,
+      area: 'Operaciones',
+      cargo: 'Colaborador'
+    },
+    {
+      nombre: 'Ana Martínez',
+      email: 'colab4@kare.com',
+      password: await bcrypt.hash('123456', saltRounds),
+      rol: 'colaborador',
+      salario_base: 3300000,
+      ibc: 3300000,
+      area: 'Ventas',
+      cargo: 'Colaborador'
+    },
+    {
+      nombre: 'Luis Fernández',
+      email: 'colab5@kare.com',
+      password: await bcrypt.hash('123456', saltRounds),
+      rol: 'colaborador',
+      salario_base: 3250000,
+      ibc: 3250000,
+      area: 'Soporte',
       cargo: 'Colaborador'
     }
   ];
