@@ -39,8 +39,9 @@ export const IncapacidadController = {
         });
       }
 
-      // Validar que se haya subido el documento (OBLIGATORIO)
-      if (!req.file) {
+      // Validar que se haya subido el documento (OBLIGATORIO para colaboradores)
+      // GH/Conta pueden crear sin documento para casos especiales/pruebas
+      if (!req.file && req.user.rol === 'colaborador') {
         return res.status(400).json({
           success: false,
           message: 'El documento de soporte (PDF/JPG) es obligatorio',
