@@ -5,18 +5,19 @@
 
 ---
 
-## 📋 LISTA COMPLETA DE ENDPOINTS (30 TOTAL)
+## 📋 LISTA COMPLETA DE ENDPOINTS (36 TOTAL)
 
 ### 🔐 AUTENTICACIÓN (3 endpoints)
 - `POST /api/auth/register` - Registrar usuario
 - `POST /api/auth/login` - Iniciar sesión
 - `GET /api/auth/profile` - Ver mi perfil
 
-### 📄 INCAPACIDADES (7 endpoints)
+### 📄 INCAPACIDADES (8 endpoints)
 - `POST /api/incapacidades` - Crear incapacidad
 - `GET /api/incapacidades` - Listar incapacidades
 - `GET /api/incapacidades/:id` - Ver una incapacidad
 - `PUT /api/incapacidades/:id/estado` - Cambiar estado
+- `DELETE /api/incapacidades/:id` - Eliminar incapacidad
 - `POST /api/incapacidades/:id/documento` - Subir documento
 - `GET /api/incapacidades/:id/documento` - Descargar documento
 - `POST /api/incapacidades/validar-documento` - OCR (extraer datos del PDF/imagen)
@@ -491,7 +492,71 @@ console.log('Incapacidad:', data.data);
 
 ---
 
-### 2.5 Descargar Documento
+### 2.5 Eliminar Incapacidad
+
+```
+📍 URL: DELETE http://localhost:3000/api/incapacidades/:id
+🔑 Token: SÍ necesitas
+👤 Quién puede: GH/Conta (cualquiera) | Colaborador/Líder (solo si es dueño y estado='reportada')
+```
+
+**📤 QUÉ ENVÍAS:**
+```
+NADA en el body
+URL: /api/incapacidades/15  ← El 15 es el ID a eliminar
+```
+
+**📥 QUÉ RECIBES (éxito):**
+```json
+{
+  "success": true,
+  "message": "Incapacidad eliminada exitosamente",
+  "data": null
+}
+```
+
+**📥 SI NO TIENES PERMISO:**
+```json
+{
+  "success": false,
+  "message": "Solo puedes eliminar incapacidades en estado 'reportada'"
+}
+```
+
+**❗ LO QUE SE ELIMINA:**
+1. Historial de cambios de estado
+2. Archivo PDF/imagen del servidor
+3. Registro de la base de datos
+
+**💡 EJEMPLO REAL:**
+```javascript
+const token = localStorage.getItem('token');
+const incapacidadId = 15;
+
+const response = await fetch(`http://localhost:3000/api/incapacidades/${incapacidadId}`, {
+  method: 'DELETE',
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+
+const data = await response.json();
+if (data.success) {
+  console.log('✅ Incapacidad eliminada');
+} else {
+  console.error('❌ Error:', data.message);
+}
+```
+
+**⚠️ IMPORTANTE:**
+- Colaboradores/Líderes **solo** pueden eliminar sus propias incapacidades si están en estado `reportada`
+- GH y Conta pueden eliminar **cualquier** incapacidad en **cualquier** estado
+- La eliminación es **permanente** y no se puede deshacer
+- Útil para limpiar datos de prueba o corregir errores de captura
+
+---
+
+### 2.6 Descargar Documento
 
 ```
 📍 URL: GET http://localhost:3000/api/incapacidades/:id/documento

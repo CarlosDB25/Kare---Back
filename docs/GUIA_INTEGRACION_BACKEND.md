@@ -1,7 +1,8 @@
 # 🔌 GUÍA DE INTEGRACIÓN - Conectar tu Frontend con el Backend KARE
 
-**Versión:** 1.0.0  
-**Fecha:** 19 de noviembre de 2025  
+**Versión:** 1.1.0  
+**Fecha:** 22 de noviembre de 2025  
+**Última actualización:** Noviembre 2025  
 **Audiencia:** Desarrollador Frontend que ya tiene su UI construida
 
 ---
@@ -877,7 +878,7 @@ const testCrear = async () => {
     tipo: 'EPS',
     fecha_inicio: '2025-11-20',
     fecha_fin: '2025-11-22',
-    diagnostico: 'Test de integración'
+    diagnostico: 'Test de integración'  // ⚠️ OBLIGATORIO (v1.1.0)
   };
 
   const response = await incapacidadesService.create(nuevaIncapacidad);
@@ -896,6 +897,19 @@ const testErrores = async () => {
     });
   } catch (err) {
     console.log('✅ Error capturado correctamente:', err.message);
+  }
+  
+  try {
+    // NUEVO (v1.1.0): Error si falta diagnóstico
+    await incapacidadesService.create({
+      tipo: 'EPS',
+      fecha_inicio: '2025-11-20',
+      fecha_fin: '2025-11-22'
+      // diagnostico: '' ❌ Causará error 400
+    });
+  } catch (err) {
+    console.log('✅ Error diagnóstico obligatorio:', err.message);
+    // "El diagnostico es obligatorio"
   }
 };
 ```

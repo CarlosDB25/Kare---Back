@@ -2,6 +2,7 @@
 
 > Documentación simple y directa de endpoints
 
+**Versión API:** 1.1.0  
 **URL Base:** `http://localhost:3000/api`
 
 ---
@@ -230,6 +231,43 @@ conciliada → aprobada_pago → pagada
 - `400` - Transición inválida
 - `403` - Sin permisos (solo GH/Conta)
 - `404` - Incapacidad no existe
+
+---
+
+### DELETE /incapacidades/:id
+
+Eliminar incapacidad.
+
+**Permisos:**
+- **GH/Conta:** Puede eliminar cualquier incapacidad
+- **Colaborador/Líder:** Solo si es el dueño y está en estado `reportada`
+
+**Response 200:**
+```json
+{
+  "success": true,
+  "message": "Incapacidad eliminada exitosamente",
+  "data": null
+}
+```
+
+**Proceso de eliminación:**
+1. Elimina historial de estados (cascada)
+2. Elimina archivo físico del servidor
+3. Elimina registro de la base de datos
+
+**Errores:**
+- `403` - Sin permisos o estado no es `reportada` (colaborador)
+- `404` - Incapacidad no existe
+
+**Ejemplo PowerShell:**
+```powershell
+$headers = @{
+    Authorization = "Bearer $token"
+}
+Invoke-RestMethod -Uri "https://api.kare.com/api/incapacidades/123" `
+    -Method DELETE -Headers $headers
+```
 
 ---
 

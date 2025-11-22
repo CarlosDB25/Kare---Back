@@ -203,6 +203,7 @@ POST   /api/incapacidades                    # Crear (con validaciones automáti
 GET    /api/incapacidades                    # Listar (filtrado por rol)
 GET    /api/incapacidades/:id                # Obtener por ID
 PUT    /api/incapacidades/:id/estado         # Cambiar estado (GH/Conta)
+DELETE /api/incapacidades/:id                # Eliminar (GH/Conta o dueño si reportada)
 POST   /api/incapacidades/:id/documento      # Subir/actualizar documento PDF/imagen
 GET    /api/incapacidades/:id/documento      # Descargar documento
 POST   /api/incapacidades/validar-documento  # OCR - Extracción y validación automática
@@ -310,22 +311,52 @@ Frontend (Externo)
 
 ## 🧪 Tests
 
-> **⚠️ IMPORTANTE:** Los tests están en la carpeta `tools/` que NO está en el repositorio Git.  
-> Si clonaste el proyecto, necesitas solicitar los archivos de testing por separado.
+### Suite de Producción - 48 Tests (100% ✅)
 
-### Suite Completa - 143 Tests (100% ✅)
+**Nueva suite automatizada con limpieza de BD integrada:**
 
-**Configuración necesaria (si tienes acceso a los tests):**
+```powershell
+# Ejecutar suite completa (fuera del repositorio)
+cd ../tests-produccion
+.\ejecutar-todos.ps1
+```
+
+**Características:**
+- ✅ **Limpieza automática** de BD antes de cada ejecución
+- ✅ **48 tests organizados** en 7 módulos
+- ✅ **100% de éxito** consistente
+- ✅ **Endpoint DELETE** implementado para gestión de incapacidades
+- ✅ **Fechas dinámicas** para evitar colisiones
+
+### Suite de Desarrollo - 143 Tests (Legacy)
+
+> **⚠️ NOTA:** Los tests de desarrollo están en la carpeta `tools/` que NO está en el repositorio Git.
+
+**Configuración (si tienes acceso):**
 
 ```powershell
 # Terminal 1: Iniciar servidor
 npm run dev
 
-# Terminal 2: Ejecutar tests (si tienes la carpeta tools/)
+# Terminal 2: Ejecutar tests
 node tools/test-robusto.js
 ```
 
-### Categorías de Tests
+### Categorías de Tests (Suite Producción)
+
+| Categoría | Tests | Estado |
+|-----------|-------|--------|
+| Autenticación | 14/14 | ✅ 100% |
+| Control de Acceso | 7/7 | ✅ 100% |
+| CRUD Incapacidades | 8/8 | ✅ 100% |
+| Validaciones de Negocio | 7/7 | ✅ 100% |
+| Cambio de Estados | 6/6 | ✅ 100% |
+| Notificaciones | 2/2 | ✅ 100% |
+| Rendimiento | 4/4 | ✅ 100% |
+
+**Resultado:** 🎉 48/48 tests pasando (100%)
+
+### Suite de Desarrollo (143 Tests - Legacy)
 
 | Categoría | Tests | Estado |
 |-----------|-------|--------|
@@ -341,8 +372,6 @@ node tools/test-robusto.js
 | Edge Cases y Seguridad | 15/15 | ✅ 100% |
 | Rendimiento | 8/8 | ✅ 100% |
 | Integración E2E | 9/9 | ✅ 100% |
-
-**Resultado Final:** 🎉 143/143 tests pasando (100%)
 
 ### Testing Manual (Sin carpeta tools/)
 
@@ -863,10 +892,25 @@ fecha_inicio: "2025-11-20"
 
 ## 📝 Changelog
 
+### v1.1.0 (Noviembre 2025)
+
+**🎉 Tests de Producción - 100% de Éxito**
+- ✅ Nueva suite de 48 tests con limpieza automática de BD
+- ✅ Endpoint `DELETE /api/incapacidades/:id` implementado
+- ✅ Script `limpiar-bd.ps1` para gestión de datos de test
+- ✅ Fechas dinámicas para evitar colisiones en tests
+- ✅ 100% de tests pasando de forma consistente
+
+**🔧 Correcciones Críticas**
+- ✅ Validación de diagnóstico obligatorio (400 en lugar de 500)
+- ✅ Corrección de columna `historial_estados.usuario_cambio_id`
+- ✅ Tipos de notificaciones válidos (`info` en lugar de tipos personalizados)
+- ✅ Eliminación en cascada de historial y documentos
+
 ### v1.0.0 (Noviembre 2025)
 
 - ✅ Sistema completo implementado
-- ✅ 143 tests (100% pasando)
+- ✅ 143 tests de desarrollo (100% pasando)
 - ✅ 6 módulos funcionales
 - ✅ Documentación completa (10,000+ líneas)
 - ✅ OCR flexible integrado (Tesseract.js + pdf-parse v2)
@@ -884,8 +928,8 @@ MIT License - Proyecto académico
 
 ---
 
-**KARE v1.0.0** 🏥 | Sistema de Gestión de Incapacidades Laborales  
-**Estado:** ✅ PRODUCCIÓN READY | **Tests:** 143/143 (100%) | **Docs:** 10,000+ líneas | **OCR:** Flexible
+**KARE v1.1.0** 🏥 | Sistema de Gestión de Incapacidades Laborales  
+**Estado:** ✅ PRODUCCIÓN READY | **Tests:** 48/48 Producción + 143/143 Desarrollo (100%) | **Docs:** 10,000+ líneas | **OCR:** Flexible
 
 ---
 

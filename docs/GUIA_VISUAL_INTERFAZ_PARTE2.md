@@ -1,7 +1,7 @@
 # 🎨 GUÍA VISUAL DE INTERFAZ - SISTEMA KARE (PARTE 2)
 
-**Versión:** 1.0.0  
-**Fecha:** 20 de noviembre de 2025  
+**Versión:** 1.1.0  
+**Fecha:** 22 de noviembre de 2025  
 **Audiencia:** Desarrolladores Frontend, Diseñadores UI/UX
 
 ---

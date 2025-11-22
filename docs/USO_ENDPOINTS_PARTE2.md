@@ -2,6 +2,7 @@
 
 > Documentación simple y directa de endpoints
 
+**Versión API:** 1.1.0  
 **URL Base:** `http://localhost:3000/api`
 
 👈 **Parte 1:** [Autenticación, Incapacidades, Notificaciones](USO_ENDPOINTS_PARTE1.md)
