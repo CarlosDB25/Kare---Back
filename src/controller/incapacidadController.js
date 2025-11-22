@@ -234,7 +234,7 @@ export const IncapacidadController = {
         // Crear notificación para el usuario dueño de la incapacidad
         await NotificacionModel.crear({
           usuario_id: incapacidad.usuario_id,
-          tipo: 'estado_cambiado',
+          tipo: 'info',
           titulo: `Incapacidad ${estadoActualizar}`,
           mensaje: `Tu incapacidad ${incapacidad.tipo} cambió a estado: ${estadoActualizar}. ${observaciones || ''}`,
           incapacidad_id: id
@@ -535,7 +535,7 @@ export const IncapacidadController = {
       if (['gh', 'conta'].includes(usuarioRol) && incapacidad.usuario_id !== usuarioId) {
         await NotificacionModel.crear({
           usuario_id: incapacidad.usuario_id,
-          tipo: 'incapacidad_documento_subido',
+          tipo: 'info',
           titulo: 'Documento actualizado',
           mensaje: `El equipo de RRHH ha actualizado el documento de tu incapacidad #${id}`,
           incapacidad_id: id
