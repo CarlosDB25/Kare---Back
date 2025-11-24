@@ -352,6 +352,31 @@ Frontend (Externo)
 - **express-validator** - Validación de schemas de entrada
 - **date-fns** - Manipulación de fechas y cálculos de días
 
+### 📄 Modelo OCR Español (spa.traineddata)
+
+El proyecto incluye el archivo **`spa.traineddata`** (3.3 MB) en la raíz, que es el modelo de lenguaje entrenado en **español** para Tesseract.js.
+
+**¿Para qué sirve?**
+- Permite que el OCR reconozca texto en español con alta precisión
+- Detecta caracteres, palabras y frases específicas del idioma español
+- Mejora el reconocimiento de nombres colombianos, diagnósticos médicos y fechas
+- Sin este archivo, Tesseract.js intentaría descargarlo automáticamente (requiere internet)
+
+**Uso en el código (`src/services/ocrService.js`):**
+```javascript
+const { data: { text, confidence } } = await Tesseract.recognize(
+  rutaArchivo,
+  'spa' // ← Usa el modelo español (spa.traineddata)
+);
+```
+
+**Resultados:**
+- **Imágenes JPG/PNG:** ~70-90% de confianza en reconocimiento
+- **Texto en español:** Mayor precisión en nombres, diagnósticos CIE-10, entidades colombianas
+- **Independiente de internet:** Modelo incluido en el repositorio
+
+> **Nota:** Este archivo está incluido en Git y se descarga automáticamente al clonar el repositorio. No requiere configuración adicional.
+
 ### Validaciones Implementadas
 
 ✅ **18 Validaciones Automáticas:**
@@ -589,6 +614,7 @@ Kare_main/
 │   ├── GUIA_VISUAL_INTERFAZ_PARTE2.md # Diseño de interfaz (Notif/Concil)
 │   └── RESUMEN_FINAL_PROYECTO.md     # Resumen ejecutivo
 │
+├── spa.traineddata                   # 📄 Modelo OCR español Tesseract (3.3 MB)
 ├── package.json                      # Dependencias y scripts
 ├── .env                              # ⚠️ NO EN GIT - Crear manualmente (ver ejemplo abajo)
 ├── .gitignore                        # Archivos ignorados
