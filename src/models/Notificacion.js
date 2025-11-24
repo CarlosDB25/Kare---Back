@@ -31,7 +31,14 @@ export default class NotificacionModel {
     
     let query = `
       SELECT 
-        n.*,
+        n.id,
+        n.usuario_id,
+        n.tipo,
+        n.titulo,
+        n.mensaje,
+        n.leida,
+        n.incapacidad_id,
+        n.created_at,
         i.tipo as incapacidad_tipo,
         i.estado as incapacidad_estado
       FROM notificaciones n
@@ -45,7 +52,9 @@ export default class NotificacionModel {
     
     query += ` ORDER BY n.created_at DESC LIMIT ?`;
     
-    return db.all(query, [usuario_id, limite]);
+    const results = await db.all(query, [usuario_id, limite]);
+    console.log(`📬 Notificaciones encontradas para usuario ${usuario_id}:`, results.length);
+    return results;
   }
   
   /**
