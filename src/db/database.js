@@ -36,13 +36,24 @@ export async function initDatabase() {
  * Crea las tablas de la base de datos si no existen
  */
 async function createTables() {
-  // Verificar si la tabla conciliaciones tiene la columna dias_incapacidad
+  // Verificar si las tablas tienen el esquema correcto
   try {
-    const columnas = await db.all(`PRAGMA table_info(conciliaciones)`);
-    const tieneDiasIncapacidad = columnas.some(col => col.name === 'dias_incapacidad');
+    // Verificar columnas en incapacidades
+    const columnasIncapacidades = await db.all(`PRAGMA table_info(incapacidades)`);
+    const tieneIBC = columnasIncapacidades.some(col => col.name === 'ibc');
+    const tieneSalarioBase = columnasIncapacidades.some(col => col.name === 'salario_base');
     
-    if (!tieneDiasIncapacidad && columnas.length > 0) {
-      console.log('[DB] Esquema antiguo detectado. Eliminando base de datos...');
+    // Verificar columnas en conciliaciones
+    const columnasConciliaciones = await db.all(`PRAGMA table_info(conciliaciones)`);
+    const tieneDiasIncapacidad = columnasConciliaciones.some(col => col.name === 'dias_incapacidad');
+    
+    // Si falta alguna columna crítica, recrear todas las tablas
+    const necesitaRecreacion = 
+      (columnasIncapacidades.length > 0 && (!tieneIBC || !tieneSalarioBase)) ||
+      (columnasConciliaciones.length > 0 && !tieneDiasIncapacidad);
+    
+    if (necesitaRecreacion) {
+      console.log('[DB] Esquema antiguo detectado. Recreando base de datos...');
       // Eliminar todas las tablas para recrearlas
       await db.exec(`DROP TABLE IF EXISTS reemplazos`);
       await db.exec(`DROP TABLE IF EXISTS conciliaciones`);
@@ -85,7 +96,9 @@ async function createTables() {
       fecha_inicio DATE NOT NULL,
       fecha_fin DATE NOT NULL,
       dias_totales INTEGER NOT NULL,
-      estado TEXT DEFAULT 'reportada' CHECK(estado IN ('reportada', 'en_revision', 'validada', 'rechazada', 'pagada')),
+      ibc REAL,
+      salario_base REAL,
+      estado TEXT DEFAULT 'reportada' CHECK(estado IN ('reportada', 'en_revision', 'validada', 'rechazada', 'pagada', 'conciliada', 'archivada')),
       documento_url TEXT,
       observaciones TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
