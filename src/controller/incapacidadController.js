@@ -94,8 +94,21 @@ export const IncapacidadController = {
         salario_base: usuario.salario_base
       });
 
-      // Obtener incapacidad creada
+      // Obtener incapacidad creada (con JOIN para incluir datos del usuario)
       const incapacidadCreada = await IncapacidadModel.obtenerPorId(incapacidadId);
+
+      // Crear notificaciones para GH, CONTA y LIDER
+      const usuariosNotificar = await UsuarioModel.obtenerPorRoles(['gh', 'conta', 'lider']);
+      
+      for (const usuarioDestino of usuariosNotificar) {
+        await NotificacionModel.crear({
+          usuario_id: usuarioDestino.id,
+          tipo: 'info',
+          titulo: 'Nueva incapacidad reportada',
+          mensaje: `${usuario.nombre} reportó una incapacidad tipo ${tipo} desde ${fecha_inicio} hasta ${fecha_fin}`,
+          incapacidad_id: incapacidadId
+        });
+      }
 
       res.status(201).json({
         success: true,

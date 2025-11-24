@@ -42,6 +42,8 @@ async function createTables() {
     const columnasIncapacidades = await db.all(`PRAGMA table_info(incapacidades)`);
     const tieneIBC = columnasIncapacidades.some(col => col.name === 'ibc');
     const tieneSalarioBase = columnasIncapacidades.some(col => col.name === 'salario_base');
+    const tieneOCRData = columnasIncapacidades.some(col => col.name === 'ocr_data');
+    const tieneDocumentoPath = columnasIncapacidades.some(col => col.name === 'documento_path');
     
     // Verificar columnas en conciliaciones
     const columnasConciliaciones = await db.all(`PRAGMA table_info(conciliaciones)`);
@@ -49,7 +51,7 @@ async function createTables() {
     
     // Si falta alguna columna crítica, recrear todas las tablas
     const necesitaRecreacion = 
-      (columnasIncapacidades.length > 0 && (!tieneIBC || !tieneSalarioBase)) ||
+      (columnasIncapacidades.length > 0 && (!tieneIBC || !tieneSalarioBase || !tieneOCRData || !tieneDocumentoPath)) ||
       (columnasConciliaciones.length > 0 && !tieneDiasIncapacidad);
     
     if (necesitaRecreacion) {
@@ -100,6 +102,8 @@ async function createTables() {
       salario_base REAL,
       estado TEXT DEFAULT 'reportada' CHECK(estado IN ('reportada', 'en_revision', 'validada', 'rechazada', 'pagada', 'conciliada', 'archivada')),
       documento_url TEXT,
+      documento_path TEXT,
+      ocr_data TEXT,
       observaciones TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
