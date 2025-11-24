@@ -18,8 +18,6 @@ export default class NotificacionModel {
       [usuario_id, tipo, titulo, mensaje, incapacidad_id || null]
     );
     
-    console.log(`Notificacion creada para usuario ${usuario_id}: ${titulo}`);
-    
     return result.lastID;
   }
   
@@ -125,8 +123,6 @@ export default class NotificacionModel {
        AND DATE(created_at) < DATE('now', '-' || ? || ' days')`,
       [dias]
     );
-    
-    console.log(`${result.changes} notificaciones antiguas eliminadas`);
     
     return result.changes;
   }

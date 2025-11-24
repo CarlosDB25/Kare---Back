@@ -19,8 +19,6 @@ export async function extraerTextoPDF(rutaArchivo) {
     const result = await parser.getText();
     await parser.destroy();
     
-    console.log(`PDF procesado: ${result.totalPages} páginas, ${result.text.length} caracteres`);
-    
     return result.text;
   } catch (error) {
     console.error('Error extrayendo texto de PDF:', error);
@@ -35,21 +33,10 @@ export async function extraerTextoPDF(rutaArchivo) {
  */
 export async function extraerTextoImagen(rutaArchivo) {
   try {
-    console.log('Iniciando OCR de imagen...');
-    
     const { data: { text, confidence } } = await Tesseract.recognize(
       rutaArchivo,
-      'spa', // Idioma español
-      {
-        logger: (m) => {
-          if (m.status === 'recognizing text') {
-            console.log(`OCR progreso: ${Math.round(m.progress * 100)}%`);
-          }
-        }
-      }
+      'spa' // Idioma español
     );
-    
-    console.log(`OCR completado: Confianza ${Math.round(confidence)}%`);
     
     return {
       texto: text,
