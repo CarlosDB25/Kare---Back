@@ -22,13 +22,17 @@ export const IncapacidadModel = {
       salario_base
     } = incapacidad;
 
+    // documento_url ya contiene el nombre del archivo
+    // documento_path será la ruta relativa para descarga
+    const documento_path = documento_url ? `uploads/user_${usuario_id}/${documento_url}` : null;
+
     const result = await db.run(
       `INSERT INTO incapacidades 
        (usuario_id, tipo, fecha_inicio, fecha_fin, dias_totales, diagnostico, 
-        documento_url, observaciones, estado, ibc, salario_base) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        documento_url, documento_path, observaciones, estado, ibc, salario_base) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [usuario_id, tipo, fecha_inicio, fecha_fin, dias, diagnostico, 
-       documento_url, observaciones, 'reportada', ibc, salario_base]
+       documento_url, documento_path, observaciones, 'reportada', ibc, salario_base]
     );
 
     return result.lastID;
@@ -40,7 +44,11 @@ export const IncapacidadModel = {
   async obtenerPorUsuario(usuarioId) {
     const db = getDatabase();
     return await db.all(
-      'SELECT * FROM incapacidades WHERE usuario_id = ? ORDER BY created_at DESC',
+      `SELECT i.*, u.nombre as usuario_nombre, u.email as usuario_email, u.ibc as usuario_ibc
+       FROM incapacidades i
+       LEFT JOIN usuarios u ON i.usuario_id = u.id
+       WHERE i.usuario_id = ? 
+       ORDER BY i.created_at DESC`,
       [usuarioId]
     );
   },
@@ -51,7 +59,7 @@ export const IncapacidadModel = {
   async obtenerTodas() {
     const db = getDatabase();
     return await db.all(`
-      SELECT i.*, u.nombre as usuario_nombre, u.email as usuario_email 
+      SELECT i.*, u.nombre as usuario_nombre, u.email as usuario_email, u.ibc as usuario_ibc
       FROM incapacidades i 
       LEFT JOIN usuarios u ON i.usuario_id = u.id 
       ORDER BY i.created_at DESC

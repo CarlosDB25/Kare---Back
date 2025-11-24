@@ -630,8 +630,8 @@ export const IncapacidadController = {
         });
       }
 
-      // Verificar permisos: solo el dueño o GH/Conta pueden ver documentos
-      if (incapacidad.usuario_id !== usuarioId && !['gh', 'conta'].includes(usuarioRol)) {
+      // Verificar permisos: el dueño, GH, CONTA o LIDER pueden ver documentos
+      if (incapacidad.usuario_id !== usuarioId && !['gh', 'conta', 'lider'].includes(usuarioRol)) {
         return res.status(403).json({
           success: false,
           message: 'No tienes permiso para ver este documento',
