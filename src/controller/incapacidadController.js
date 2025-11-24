@@ -73,13 +73,25 @@ export const IncapacidadController = {
         });
       }
 
+      // Obtener IBC y salario_base del usuario
+      const usuario = await UsuarioModel.obtenerPorId(usuario_id);
+      if (!usuario) {
+        return res.status(404).json({
+          success: false,
+          message: 'Usuario no encontrado',
+          data: null
+        });
+      }
+
       // Verificar si se subió un archivo
       const documento_url = req.file ? req.file.filename : null;
 
-      // Crear incapacidad con datos validados
+      // Crear incapacidad con datos validados + IBC del usuario
       const incapacidadId = await IncapacidadModel.crear({
         ...validacion.datos,
-        documento_url
+        documento_url,
+        ibc: usuario.ibc,
+        salario_base: usuario.salario_base
       });
 
       // Obtener incapacidad creada
