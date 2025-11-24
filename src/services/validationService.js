@@ -5,13 +5,17 @@ import { IncapacidadModel } from '../models/Incapacidad.js';
 
 /**
  * Validaciones de transiciones de estado permitidas
+ * FLUJO COMPLETO:
+ * reportada (colab) → en_revision (GH) → validada (GH) → pagada (CONTA) → conciliada (CONTA) → archivada (CONTA)
  */
 const TRANSICIONES_VALIDAS = {
   'reportada': ['en_revision', 'rechazada'],
   'en_revision': ['validada', 'rechazada'],
-  'validada': ['pagada'],
+  'validada': ['pagada', 'rechazada'],
   'rechazada': ['reportada'], // Puede volver a reportarse con correcciones
-  'pagada': [] // Estado final, no puede cambiar
+  'pagada': ['conciliada'],
+  'conciliada': ['archivada'],
+  'archivada': [] // Estado final, no puede cambiar
 };
 
 /**

@@ -62,7 +62,14 @@ export const IncapacidadModel = {
   async obtenerPorId(id) {
     const db = getDatabase();
     return await db.get(
-      'SELECT * FROM incapacidades WHERE id = ?',
+      `SELECT 
+        i.*,
+        u.nombre as usuario_nombre,
+        u.email as usuario_email,
+        u.ibc as usuario_ibc
+      FROM incapacidades i
+      LEFT JOIN usuarios u ON i.usuario_id = u.id
+      WHERE i.id = ?`,
       [id]
     );
   },
