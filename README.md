@@ -10,8 +10,48 @@
 
 ---
 
+## 🌐 API en Producción (24/7)
+
+> **⚡️ ¡El API está desplegado y funcionando en la nube!**
+
+**URL Base:** `https://kare-back.onrender.com/api`
+
+**✅ Prueba rápida (sin instalar nada):**
+
+```bash
+# Health check
+curl https://kare-back.onrender.com/api/health
+
+# Login y obtener token
+curl -X POST https://kare-back.onrender.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"gh@kare.com","password":"123456"}'
+
+# Listar usuarios (requiere token del login anterior)
+curl https://kare-back.onrender.com/api/usuarios \
+  -H "Authorization: Bearer TU_TOKEN_AQUI"
+```
+
+**📊 Estado del Servidor:**
+- 🟢 **Disponibilidad:** 24/7 (Render.com)
+- ✅ **Tests automatizados:** 48/48 (100%)
+- 👥 **Usuarios de prueba:** 8 precargados
+- 🔐 **Autenticación:** JWT activa
+- 📦 **Base de datos:** SQLite persistente
+
+**🎯 Casos de uso:**
+- **Desarrolladores frontend:** Usar directamente sin clonar repositorio
+- **Pruebas rápidas:** Verificar endpoints sin configuración local
+- **Demos:** Mostrar funcionalidad en presentaciones
+- **Testing:** Suite de tests de producción validada
+
+[👉 Ver todos los endpoints disponibles](#-api-endpoints)
+
+---
+
 ## 📑 Tabla de Contenidos
 
+- [🌐 API en Producción (24/7)](#-api-en-producción-247)
 - [Inicio Rápido](#-inicio-rápido)
 - [Características](#-características-principales)
 - [Usuarios de Prueba](#-usuarios-de-prueba)
@@ -83,38 +123,60 @@ npm run dev
 - 5 usuarios de prueba (gh@kare.com, conta@kare.com, etc.)
 - Todas las tablas necesarias
 
-**🌐 URLs:**
-- **Producción (24/7):** https://kare-back.onrender.com/api
-- **Local (desarrollo):** http://localhost:3000/api
+**🌐 URLs Disponibles:**
+
+| Entorno | URL Base | Uso |
+|---------|----------|-----|
+| **🌐 Producción** | `https://kare-back.onrender.com/api` | **API en la nube 24/7** (sin instalación) |
+| **💻 Local** | `http://localhost:3000/api` | Desarrollo local (requiere clonar repo) |
+
+> **💡 Tip:** Usa la **URL de producción** para probar sin instalar nada localmente.
 
 ---
 
 ## ✅ Verificar que Todo Funciona
 
-### Producción (API en línea 24/7)
-```powershell
+### 🌐 Opción 1: Usar API en Producción (RECOMENDADO - Sin instalación)
+
+**No necesitas clonar el repositorio. Usa directamente:**
+
+```bash
 # 1. Health check
 curl https://kare-back.onrender.com/api/health
+# Respuesta esperada: {"status":"OK","timestamp":"..."}
 
-# 2. Login de prueba
-curl -X POST https://kare-back.onrender.com/api/auth/login -H "Content-Type: application/json" -d "{\"email\":\"gh@kare.com\",\"password\":\"123456\"}"
+# 2. Login y obtener token JWT
+curl -X POST https://kare-back.onrender.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"gh@kare.com","password":"123456"}'
+# Respuesta: {"success":true,"data":{"token":"eyJ...","usuario":{...}}}
+
+# 3. Listar usuarios (copia el token del paso 2)
+curl https://kare-back.onrender.com/api/usuarios \
+  -H "Authorization: Bearer TU_TOKEN_AQUI"
+# Respuesta: {"success":true,"data":[...]}
 ```
 
-### Local (desarrollo)
-```powershell
+**✅ Ventajas de usar Producción:**
+- ⚡️ Sin configuración ni instalación
+- 🔒 HTTPS seguro
+- 📊 Datos de prueba precargados
+- 🌐 Accesible desde cualquier lugar
+
+### 💻 Opción 2: Desarrollo Local (Requiere instalación)
+
+**Primero debes completar los pasos 1-4 de [Inicio Rápido](#-inicio-rápido)**
+
+```bash
 # 1. Health check
 curl http://localhost:3000/api/health
+# Respuesta esperada: {"status":"OK","timestamp":"..."}
 
-# 2. Login
-curl -X POST http://localhost:3000/api/auth/login -H "Content-Type: application/json" -d "{\"email\":\"gh@kare.com\",\"password\":\"123456\"}"
-```
-
-**Respuesta esperada:**
-```json
-{
-  "success": true,
-  "message": "KARE API funcionando correctamente"
-}
+# 2. Login y obtener token
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"gh@kare.com","password":"123456"}'
+# Respuesta: {"success":true,"data":{"token":"eyJ...","usuario":{...}}}
 ```
 
 ---
