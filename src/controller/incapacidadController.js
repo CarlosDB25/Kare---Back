@@ -118,7 +118,7 @@ export const IncapacidadController = {
         
         // Mensaje especial para líderes con urgencia de reemplazo
         if (usuarioDestino.rol === 'lider') {
-          titulo = `${iconoUrgencia} Incapacidad - Urgencia de reemplazo ${urgencia.toUpperCase()}`;
+          titulo = `Incapacidad - Urgencia de reemplazo ${urgencia.toUpperCase()}`;
           mensaje = `${usuario.nombre} estará ${diasTotales} días de incapacidad (${tipo}). ` +
                    `Urgencia de reemplazo: ${urgencia.toUpperCase()} - ` +
                    (urgencia === 'alta' ? 'Requiere atención inmediata' : 
@@ -317,7 +317,7 @@ export const IncapacidadController = {
         await NotificacionModel.crear({
           usuario_id: gh.id,
           tipo: 'info',
-          titulo: '🔄 Incapacidad Corregida',
+          titulo: 'Incapacidad Corregida',
           mensaje: `${incapacidad.usuario_nombre} corrigió y reenvió su incapacidad ${tipo} (${dias} días). Requiere nueva revisión.`,
           incapacidad_id: id
         });
@@ -439,7 +439,7 @@ export const IncapacidadController = {
             await NotificacionModel.crear({
               usuario_id: conta.id,
               tipo: 'warning',
-              titulo: '💰 Incapacidad Lista para Conciliar',
+              titulo: 'Incapacidad Lista para Conciliar',
               mensaje: `La incapacidad ${incapacidad.tipo} de ${incapacidad.usuario_nombre} ha sido validada y requiere conciliación.`,
               incapacidad_id: id
             });
@@ -453,7 +453,7 @@ export const IncapacidadController = {
             await NotificacionModel.crear({
               usuario_id: gh.id,
               tipo: 'success',
-              titulo: '✅ Incapacidad Conciliada',
+              titulo: 'Incapacidad Conciliada',
               mensaje: `La incapacidad ${incapacidad.tipo} de ${incapacidad.usuario_nombre} fue conciliada y está lista para pago.`,
               incapacidad_id: id
             });
