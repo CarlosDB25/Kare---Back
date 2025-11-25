@@ -99,7 +99,7 @@ export const IncapacidadController = {
 
       // Crear notificaciones para GH, CONTA y LIDER con niveles de urgencia
       const usuariosNotificar = await UsuarioModel.obtenerPorRoles(['gh', 'conta', 'lider']);
-      const diasTotales = validacion.datos.dias_totales;
+      const diasTotales = datosIncapacidad.dias;
       
       // Determinar nivel de urgencia para líderes
       let urgencia = 'leve';
