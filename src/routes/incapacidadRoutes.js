@@ -39,6 +39,14 @@ router.put(
   IncapacidadController.actualizarEstado
 );
 
+// PUT /api/incapacidades/:id - Actualizar datos de incapacidad rechazada
+// Solo el colaborador dueño puede actualizar su incapacidad rechazada
+router.put(
+  '/:id',
+  authMiddleware,
+  IncapacidadController.actualizar
+);
+
 // POST /api/incapacidades/validar-documento - Validar documento con OCR
 // Cualquier usuario autenticado puede validar
 router.post(

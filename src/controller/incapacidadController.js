@@ -230,6 +230,115 @@ export const IncapacidadController = {
   },
 
   /**
+   * Actualizar datos de incapacidad rechazada
+   * PUT /api/incapacidades/:id
+   * Solo el colaborador dueño puede actualizar su incapacidad rechazada
+   */
+  async actualizar(req, res) {
+    try {
+      const { id } = req.params;
+      const { tipo, fecha_inicio, fecha_fin, diagnostico, observaciones } = req.body;
+
+      // Verificar que la incapacidad existe
+      const incapacidad = await IncapacidadModel.obtenerPorId(id);
+      if (!incapacidad) {
+        return res.status(404).json({
+          success: false,
+          message: 'Incapacidad no encontrada',
+          data: null
+        });
+      }
+
+      // Solo el dueño puede actualizar
+      if (incapacidad.usuario_id !== req.user.id) {
+        return res.status(403).json({
+          success: false,
+          message: 'No tienes permisos para actualizar esta incapacidad',
+          data: null
+        });
+      }
+
+      // Solo se pueden actualizar incapacidades rechazadas
+      if (incapacidad.estado !== 'rechazada') {
+        return res.status(400).json({
+          success: false,
+          message: 'Solo se pueden actualizar incapacidades rechazadas',
+          data: null
+        });
+      }
+
+      // Validar fechas
+      if (!fecha_inicio || !fecha_fin) {
+        return res.status(400).json({
+          success: false,
+          message: 'Las fechas son obligatorias',
+          data: null
+        });
+      }
+
+      const inicio = new Date(fecha_inicio);
+      const fin = new Date(fecha_fin);
+      
+      if (fin < inicio) {
+        return res.status(400).json({
+          success: false,
+          message: 'La fecha de fin no puede ser anterior a la fecha de inicio',
+          data: null
+        });
+      }
+
+      // Calcular días
+      const dias = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+
+      // Actualizar en base de datos
+      const db = getDatabase();
+      await db.run(
+        `UPDATE incapacidades 
+         SET tipo = ?, fecha_inicio = ?, fecha_fin = ?, diagnostico = ?, observaciones = ?, 
+             estado = 'reportada', updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [tipo, fecha_inicio, fecha_fin, diagnostico, observaciones, id]
+      );
+
+      // Registrar en historial
+      await HistorialEstadoModel.crear({
+        incapacidad_id: id,
+        estado_anterior: 'rechazada',
+        estado_nuevo: 'reportada',
+        usuario_cambio_id: req.user.id,
+        observaciones: `Incapacidad corregida: ${observaciones || 'Sin observaciones'}`
+      });
+
+      // Obtener usuarios de GH para notificar
+      const usuariosGH = await UsuarioModel.obtenerPorRoles(['gh']);
+      
+      // Crear notificación para cada GH
+      for (const gh of usuariosGH) {
+        await NotificacionModel.crear({
+          usuario_id: gh.id,
+          tipo: 'info',
+          titulo: '🔄 Incapacidad Corregida',
+          mensaje: `${incapacidad.usuario_nombre} corrigió y reenvió su incapacidad ${tipo} (${dias} días). Requiere nueva revisión.`,
+          incapacidad_id: id
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Incapacidad actualizada y reenviada exitosamente',
+        data: { id, estado: 'reportada' }
+      });
+    } catch (error) {
+      console.error('Error en actualizar incapacidad:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al actualizar incapacidad',
+        data: null
+      });
+    }
+  },
+
+  /**
    * Actualizar estado de una incapacidad
    * PUT /api/incapacidades/:id/estado
    * Solo GH/Conta pueden cambiar estados
@@ -313,6 +422,34 @@ export const IncapacidadController = {
           mensaje: `Tu incapacidad ${incapacidad.tipo} cambió a estado: ${estadoActualizar}. ${observaciones || ''}`,
           incapacidad_id: id
         });
+
+        // Notificar a Contabilidad cuando una incapacidad llega a validada
+        if (estadoActualizar === 'validada') {
+          const usuariosConta = await UsuarioModel.obtenerPorRoles(['conta']);
+          for (const conta of usuariosConta) {
+            await NotificacionModel.crear({
+              usuario_id: conta.id,
+              tipo: 'warning',
+              titulo: '💰 Incapacidad Lista para Conciliar',
+              mensaje: `La incapacidad ${incapacidad.tipo} de ${incapacidad.usuario_nombre} ha sido validada y requiere conciliación.`,
+              incapacidad_id: id
+            });
+          }
+        }
+
+        // Notificar a GH cuando una incapacidad llega a conciliada (lista para pago)
+        if (estadoActualizar === 'conciliada') {
+          const usuariosGH = await UsuarioModel.obtenerPorRoles(['gh']);
+          for (const gh of usuariosGH) {
+            await NotificacionModel.crear({
+              usuario_id: gh.id,
+              tipo: 'success',
+              titulo: '✅ Incapacidad Conciliada',
+              mensaje: `La incapacidad ${incapacidad.tipo} de ${incapacidad.usuario_nombre} fue conciliada y está lista para pago.`,
+              incapacidad_id: id
+            });
+          }
+        }
 
         res.json({
           success: true,
