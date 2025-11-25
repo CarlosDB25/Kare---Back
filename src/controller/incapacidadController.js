@@ -262,6 +262,26 @@ export const IncapacidadController = {
 
       const estadoAnterior = incapacidad.estado;
 
+      // Permitir a colaboradores corregir sus propias incapacidades rechazadas
+      if (req.user.rol === 'colaborador') {
+        // Verificar que es el dueño de la incapacidad
+        if (incapacidad.usuario_id !== req.user.id) {
+          return res.status(403).json({
+            success: false,
+            message: 'No tienes permisos para cambiar el estado de esta incapacidad',
+            data: null
+          });
+        }
+        // Solo permitir la transición de rechazada a reportada
+        if (estadoAnterior !== 'rechazada' || estadoActualizar !== 'reportada') {
+          return res.status(403).json({
+            success: false,
+            message: 'Solo puedes reenviar incapacidades rechazadas',
+            data: null
+          });
+        }
+      }
+
       // Validar transición de estados
       const validacionTransicion = validarTransicionEstado(estadoAnterior, estadoActualizar);
       if (!validacionTransicion.valido) {

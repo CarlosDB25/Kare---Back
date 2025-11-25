@@ -30,11 +30,12 @@ router.get(
 );
 
 // PUT /api/incapacidades/:id/estado - Actualizar estado
-// Solo Gestión Humana y Contabilidad pueden cambiar estados
+// GH y Contabilidad pueden cambiar estados
+// Colaboradores pueden reenviar sus propias incapacidades rechazadas
 router.put(
   '/:id/estado',
   authMiddleware,
-  roleMiddleware(['gh', 'conta']),
+  roleMiddleware(['gh', 'conta', 'colaborador']),
   IncapacidadController.actualizarEstado
 );
 
