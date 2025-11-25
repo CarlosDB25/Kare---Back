@@ -86,23 +86,6 @@ export const ReemplazoController = {
         created_by: req.user.id
       });
 
-      // Calcular si el reemplazo termina después de la incapacidad
-      const fechaFinIncapacidad = new Date(incapacidad.fecha_fin);
-      const fechaFinReemplazo = new Date(fecha_fin);
-      
-      if (fechaFinReemplazo > fechaFinIncapacidad) {
-        const diasExtras = Math.ceil((fechaFinReemplazo - fechaFinIncapacidad) / (1000 * 60 * 60 * 24));
-        
-        // Notificar al colaborador de reemplazo sobre la extensión
-        await NotificacionModel.crear({
-          usuario_id: colaborador_reemplazo_id,
-          tipo: 'info',
-          titulo: 'Reemplazo con días extras',
-          mensaje: `Tu reemplazo termina ${diasExtras} día(s) después de la incapacidad. Fecha fin: ${fecha_fin}`,
-          incapacidad_id
-        });
-      }
-
       // Obtener reemplazo creado con toda la información
       const reemplazo = await ReemplazoModel.obtenerPorId(reemplazoId);
 
@@ -115,7 +98,7 @@ export const ReemplazoController = {
         incapacidad_id
       });
 
-      // Notificar al colaborador ausente
+      // Notificar al colaborador ausente (incapacitado)
       await NotificacionModel.crear({
         usuario_id: incapacidad.usuario_id,
         tipo: 'success',
@@ -123,6 +106,23 @@ export const ReemplazoController = {
         mensaje: `${colaboradorReemplazo.nombre} cubrirá tus funciones durante tu incapacidad`,
         incapacidad_id
       });
+
+      // Calcular si el reemplazo termina después de la incapacidad
+      const fechaFinIncapacidad = new Date(incapacidad.fecha_fin);
+      const fechaFinReemplazo = new Date(fecha_fin);
+      
+      if (fechaFinReemplazo > fechaFinIncapacidad) {
+        const diasExtras = Math.ceil((fechaFinReemplazo - fechaFinIncapacidad) / (1000 * 60 * 60 * 24));
+        
+        // Notificar al colaborador ausente (incapacitado) sobre la extensión
+        await NotificacionModel.crear({
+          usuario_id: incapacidad.usuario_id,
+          tipo: 'warning',
+          titulo: 'Reemplazo extendido',
+          mensaje: `Tu reemplazo se extenderá ${diasExtras} día(s) después del fin de tu incapacidad (hasta ${fecha_fin}). Coordina tu regreso con tu líder.`,
+          incapacidad_id
+        });
+      }
 
       res.status(201).json({
         success: true,
