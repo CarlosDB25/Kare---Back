@@ -2,9 +2,6 @@
 // Servicio para extraer texto de documentos PDF e imágenes usando OCR
 
 import Tesseract from 'tesseract.js';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
 import fs from 'fs';
 
 /**
@@ -14,6 +11,8 @@ import fs from 'fs';
  */
 export async function extraerTextoPDF(rutaArchivo) {
   try {
+    // Importación dinámica de pdf-parse
+    const pdfParse = (await import('pdf-parse')).default;
     const dataBuffer = fs.readFileSync(rutaArchivo);
     const data = await pdfParse(dataBuffer);
     

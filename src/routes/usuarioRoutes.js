@@ -7,14 +7,14 @@ const router = express.Router();
 
 /**
  * Rutas de administración de usuarios
- * Gestión Humana y Contabilidad pueden acceder
+ * Gestión Humana, Contabilidad y Líderes pueden acceder
  */
 
 // GET /api/usuarios - Obtener todos los usuarios
 router.get(
   '/',
   authMiddleware,
-  roleMiddleware(['gh', 'conta']),
+  roleMiddleware(['gh', 'conta', 'lider']),
   UsuarioController.obtenerTodos
 );
 
