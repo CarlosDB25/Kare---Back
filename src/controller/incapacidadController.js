@@ -97,15 +97,40 @@ export const IncapacidadController = {
       // Obtener incapacidad creada (con JOIN para incluir datos del usuario)
       const incapacidadCreada = await IncapacidadModel.obtenerPorId(incapacidadId);
 
-      // Crear notificaciones para GH, CONTA y LIDER
+      // Crear notificaciones para GH, CONTA y LIDER con niveles de urgencia
       const usuariosNotificar = await UsuarioModel.obtenerPorRoles(['gh', 'conta', 'lider']);
+      const diasTotales = validacion.datos.dias_totales;
+      
+      // Determinar nivel de urgencia para líderes
+      let urgencia = 'leve';
+      let iconoUrgencia = '🟢';
+      if (diasTotales >= 30) {
+        urgencia = 'alta';
+        iconoUrgencia = '🔴';
+      } else if (diasTotales >= 10) {
+        urgencia = 'moderada';
+        iconoUrgencia = '🟡';
+      }
       
       for (const usuarioDestino of usuariosNotificar) {
+        let mensaje = `${usuario.nombre} reportó una incapacidad tipo ${tipo} desde ${fecha_inicio} hasta ${fecha_fin} (${diasTotales} días)`;
+        let titulo = 'Nueva incapacidad reportada';
+        
+        // Mensaje especial para líderes con urgencia de reemplazo
+        if (usuarioDestino.rol === 'lider') {
+          titulo = `${iconoUrgencia} Incapacidad - Urgencia de reemplazo ${urgencia.toUpperCase()}`;
+          mensaje = `${usuario.nombre} estará ${diasTotales} días de incapacidad (${tipo}). ` +
+                   `Urgencia de reemplazo: ${urgencia.toUpperCase()} - ` +
+                   (urgencia === 'alta' ? 'Requiere atención inmediata' : 
+                    urgencia === 'moderada' ? 'Planificar reemplazo pronto' : 
+                    'Monitorear situación');
+        }
+        
         await NotificacionModel.crear({
           usuario_id: usuarioDestino.id,
-          tipo: 'info',
-          titulo: 'Nueva incapacidad reportada',
-          mensaje: `${usuario.nombre} reportó una incapacidad tipo ${tipo} desde ${fecha_inicio} hasta ${fecha_fin}`,
+          tipo: urgencia === 'alta' ? 'error' : urgencia === 'moderada' ? 'warning' : 'info',
+          titulo,
+          mensaje,
           incapacidad_id: incapacidadId
         });
       }
