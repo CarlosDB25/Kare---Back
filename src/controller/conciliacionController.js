@@ -85,6 +85,9 @@ export const ConciliacionController = {
         observaciones: calculoConciliacion.observaciones
       });
 
+      // Cambiar estado de la incapacidad a 'pagada' automáticamente
+      await IncapacidadModel.actualizarEstado(incapacidad_id, 'pagada', 'Conciliación creada automáticamente');
+
       // Crear notificación para el usuario de la incapacidad
       await NotificacionModel.crear({
         usuario_id: incapacidad.usuario_id,
