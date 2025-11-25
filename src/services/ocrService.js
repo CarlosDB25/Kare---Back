@@ -17,10 +17,18 @@ export async function extraerTextoPDF(rutaArchivo) {
     const dataBuffer = fs.readFileSync(rutaArchivo);
     const data = await pdf(dataBuffer);
     
+    if (!data || !data.text) {
+      throw new Error('El PDF no contiene texto extraíble');
+    }
+    
     return data.text;
   } catch (error) {
-    console.error('Error extrayendo texto de PDF:', error);
-    throw new Error('No se pudo procesar el PDF. Verifique que el archivo no esté corrupto.');
+    console.error('Error extrayendo texto de PDF:', error.message);
+    // Si el PDF es imagen escaneada, sugerir usar OCR de imagen
+    if (error.message && error.message.includes('text')) {
+      throw new Error('El PDF parece ser una imagen escaneada. Intente convertirlo a imagen (JPG/PNG) para OCR.');
+    }
+    throw new Error(`Error procesando PDF: ${error.message || 'Archivo corrupto o no compatible'}`);
   }
 }
 
