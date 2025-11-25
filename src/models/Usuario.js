@@ -47,7 +47,7 @@ export const UsuarioModel = {
    */
   async obtenerTodos() {
     const db = getDatabase();
-    return await db.all('SELECT id, nombre, email, rol, area, cargo, ibc, salario, created_at FROM usuarios');
+    return await db.all('SELECT id, nombre, email, rol, area, cargo, ibc, salario_base as salario, created_at FROM usuarios');
   },
 
   /**
