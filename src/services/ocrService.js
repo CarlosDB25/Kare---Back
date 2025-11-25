@@ -2,9 +2,7 @@
 // Servicio para extraer texto de documentos PDF e imágenes usando OCR
 
 import Tesseract from 'tesseract.js';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const { PDFParse } = require('pdf-parse');
+import pdf from 'pdf-parse';
 import fs from 'fs';
 
 /**
@@ -14,12 +12,10 @@ import fs from 'fs';
  */
 export async function extraerTextoPDF(rutaArchivo) {
   try {
-    const buffer = fs.readFileSync(rutaArchivo);
-    const parser = new PDFParse({ data: buffer });
-    const result = await parser.getText();
-    await parser.destroy();
+    const dataBuffer = fs.readFileSync(rutaArchivo);
+    const data = await pdf(dataBuffer);
     
-    return result.text;
+    return data.text;
   } catch (error) {
     console.error('Error extrayendo texto de PDF:', error);
     throw new Error('No se pudo procesar el PDF. Verifique que el archivo no esté corrupto.');
@@ -35,7 +31,10 @@ export async function extraerTextoImagen(rutaArchivo) {
   try {
     const { data: { text, confidence } } = await Tesseract.recognize(
       rutaArchivo,
-      'spa' // Idioma español
+      'spa', // Idioma español
+      {
+        langPath: './spa.traineddata', // Ruta al archivo de idioma
+      }
     );
     
     return {
