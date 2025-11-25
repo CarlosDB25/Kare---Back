@@ -103,13 +103,10 @@ export const IncapacidadController = {
       
       // Determinar nivel de urgencia para líderes
       let urgencia = 'leve';
-      let iconoUrgencia = '🟢';
       if (diasTotales >= 30) {
         urgencia = 'alta';
-        iconoUrgencia = '🔴';
       } else if (diasTotales >= 10) {
         urgencia = 'moderada';
-        iconoUrgencia = '🟡';
       }
       
       for (const usuarioDestino of usuariosNotificar) {
