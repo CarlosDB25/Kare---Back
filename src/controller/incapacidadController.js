@@ -391,6 +391,15 @@ export const IncapacidadController = {
         }
       }
 
+      // Solo GH puede archivar incapacidades
+      if (estadoActualizar === 'archivada' && req.user.rol !== 'gh') {
+        return res.status(403).json({
+          success: false,
+          message: 'Solo Gestión Humana puede archivar incapacidades',
+          data: null
+        });
+      }
+
       // Validar transición de estados
       const validacionTransicion = validarTransicionEstado(estadoAnterior, estadoActualizar);
       if (!validacionTransicion.valido) {
