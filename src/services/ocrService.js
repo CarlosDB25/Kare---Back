@@ -6,28 +6,39 @@ import fs from 'fs';
 
 /**
  * Extrae texto de un archivo PDF
+ * NOTA: Solo funciona con PDFs que tienen texto seleccionable
+ * Para PDFs escaneados (imágenes), usar extraerTextoImagen directamente
  * @param {string} rutaArchivo - Ruta al archivo PDF
  * @returns {Promise<string>} - Texto extraído del PDF
  */
 export async function extraerTextoPDF(rutaArchivo) {
   try {
-    // Importación dinámica de pdf-parse
+    // Intentar importación dinámica
     const pdfParse = (await import('pdf-parse')).default;
+    
+    if (typeof pdfParse !== 'function') {
+      throw new Error('pdf-parse no se cargó correctamente');
+    }
+    
     const dataBuffer = fs.readFileSync(rutaArchivo);
     const data = await pdfParse(dataBuffer);
     
-    if (!data || !data.text) {
-      throw new Error('El PDF no contiene texto extraíble');
+    if (!data || !data.text || data.text.trim().length < 10) {
+      throw new Error('PDF_SIN_TEXTO');
     }
     
     return data.text;
   } catch (error) {
     console.error('Error extrayendo texto de PDF:', error.message);
-    // Si el PDF es imagen escaneada, sugerir usar OCR de imagen
-    if (error.message && error.message.includes('text')) {
-      throw new Error('El PDF parece ser una imagen escaneada. Intente convertirlo a imagen (JPG/PNG) para OCR.');
+    
+    // Si el PDF no tiene texto, intentar OCR sobre el PDF como imagen
+    if (error.message === 'PDF_SIN_TEXTO' || error.message.includes('pdf-parse')) {
+      console.log('PDF sin texto extraíble, intentando OCR...');
+      // Para PDFs escaneados, sugerir convertir a imagen
+      throw new Error('PDF_ESCANADO');
     }
-    throw new Error(`Error procesando PDF: ${error.message || 'Archivo corrupto o no compatible'}`);
+    
+    throw new Error(`Error procesando PDF: ${error.message || 'Archivo corrupto'}`);
   }
 }
 
@@ -66,8 +77,17 @@ export async function extraerTextoDocumento(rutaArchivo, nombreArchivo) {
   const extension = nombreArchivo.toLowerCase().split('.').pop();
   
   if (extension === 'pdf') {
-    const texto = await extraerTextoPDF(rutaArchivo);
-    return { texto, confianza: 100 }; // PDF siempre tiene 100% confianza
+    try {
+      const texto = await extraerTextoPDF(rutaArchivo);
+      return { texto, confianza: 100 }; // PDF con texto tiene 100% confianza
+    } catch (error) {
+      // Si el PDF está escaneado, intentar OCR como si fuera imagen
+      if (error.message === 'PDF_ESCANADO') {
+        console.log('Intentando OCR en PDF escaneado...');
+        return await extraerTextoImagen(rutaArchivo);
+      }
+      throw error;
+    }
   }
   
   if (['jpg', 'jpeg', 'png', 'bmp', 'tiff'].includes(extension)) {
