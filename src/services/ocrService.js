@@ -4,7 +4,7 @@
 import Tesseract from 'tesseract.js';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const pdf = require('pdf-parse');
+const pdfParse = require('pdf-parse');
 import fs from 'fs';
 
 /**
@@ -15,7 +15,7 @@ import fs from 'fs';
 export async function extraerTextoPDF(rutaArchivo) {
   try {
     const dataBuffer = fs.readFileSync(rutaArchivo);
-    const data = await pdf(dataBuffer);
+    const data = await pdfParse(dataBuffer);
     
     if (!data || !data.text) {
       throw new Error('El PDF no contiene texto extraíble');
