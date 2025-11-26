@@ -117,5 +117,60 @@ export const UsuarioController = {
         data: null
       });
     }
+  },
+
+  /**
+   * Completar datos de un usuario
+   * PUT /api/usuarios/:id/completar-datos
+   * Solo GH puede acceder
+   */
+  async completarDatos(req, res) {
+    try {
+      const { id } = req.params;
+      const { salario_base, ibc, area, cargo } = req.body;
+
+      // Verificar que el usuario existe
+      const usuario = await UsuarioModel.buscarPorId(id);
+      if (!usuario) {
+        return res.status(404).json({
+          success: false,
+          message: 'Usuario no encontrado',
+          data: null
+        });
+      }
+
+      // Actualizar datos
+      const db = await import('../db/database.js').then(m => m.getDatabase());
+      const result = await db.run(
+        `UPDATE usuarios 
+         SET salario_base = ?, ibc = ?, area = ?, cargo = ?, updated_at = CURRENT_TIMESTAMP 
+         WHERE id = ?`,
+        [salario_base || null, ibc || null, area || null, cargo || null, id]
+      );
+
+      if (result.changes > 0) {
+        const usuarioActualizado = await UsuarioModel.buscarPorId(id);
+        delete usuarioActualizado.password;
+
+        res.json({
+          success: true,
+          message: 'Datos actualizados exitosamente',
+          data: usuarioActualizado
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'No se pudieron actualizar los datos',
+          data: null
+        });
+      }
+    } catch (error) {
+      console.error('Error en completar datos:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error al actualizar datos',
+        data: null
+      });
+    }
   }
 };

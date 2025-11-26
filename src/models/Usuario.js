@@ -63,6 +63,17 @@ export const UsuarioModel = {
   },
 
   /**
+   * Obtener usuarios por un rol específico
+   */
+  async obtenerPorRol(rol) {
+    const db = getDatabase();
+    return await db.all(
+      'SELECT id, nombre, email, rol FROM usuarios WHERE rol = ?',
+      [rol]
+    );
+  },
+
+  /**
    * Actualizar rol de un usuario
    */
   async actualizarRol(id, nuevoRol) {

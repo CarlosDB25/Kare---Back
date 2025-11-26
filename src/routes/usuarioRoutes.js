@@ -34,4 +34,12 @@ router.put(
   UsuarioController.actualizarRol
 );
 
+// PUT /api/usuarios/:id/completar-datos - Completar datos de usuario
+router.put(
+  '/:id/completar-datos',
+  authMiddleware,
+  roleMiddleware(['gh']),
+  UsuarioController.completarDatos
+);
+
 export default router;

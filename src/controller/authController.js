@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { UsuarioModel } from '../models/Usuario.js';
+import NotificacionModel from '../models/Notificacion.js';
 
 /**
  * Controlador de autenticación
@@ -54,6 +55,24 @@ export const AuthController = {
         rol,
         documento
       });
+
+      // Notificar a todos los GH sobre el nuevo registro
+      try {
+        const usuariosGH = await UsuarioModel.obtenerPorRol('gh');
+        
+        for (const gh of usuariosGH) {
+          await NotificacionModel.crear({
+            usuario_id: gh.id,
+            tipo: 'registro',
+            titulo: 'Nuevo usuario registrado',
+            mensaje: `${nombre} se ha registrado como ${rol}. Por favor, complete los datos faltantes (salario, IBC, área, cargo).`,
+            incapacidad_id: null
+          });
+        }
+      } catch (notifError) {
+        console.error('Error al crear notificación para GH:', notifError);
+        // No fallar el registro si falla la notificación
+      }
 
       res.status(201).json({
         success: true,
