@@ -24,8 +24,21 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Configuración CORS
+const corsOptions = {
+  origin: [
+    'http://localhost:5173',           // Vite dev
+    'http://localhost:3000',           // Local alternativo
+    'https://kare-2am6.onrender.com'   // Frontend en producción
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Authorization']
+};
+
 // Middlewares
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
