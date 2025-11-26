@@ -58,9 +58,12 @@ export const AuthController = {
 
       // Notificar a todos los GH sobre el nuevo registro
       try {
+        console.log('[REGISTRO] Buscando usuarios GH para notificar...');
         const usuariosGH = await UsuarioModel.obtenerPorRol('gh');
+        console.log(`[REGISTRO] Encontrados ${usuariosGH.length} usuarios GH`);
         
         for (const gh of usuariosGH) {
+          console.log(`[REGISTRO] Creando notificación para ${gh.nombre} (ID: ${gh.id})`);
           await NotificacionModel.crear({
             usuario_id: gh.id,
             tipo: 'registro',
@@ -68,9 +71,10 @@ export const AuthController = {
             mensaje: `${nombre} se ha registrado como ${rol}. Por favor, complete los datos faltantes (salario, IBC, área, cargo).`,
             incapacidad_id: null
           });
+          console.log(`[REGISTRO] Notificación creada exitosamente`);
         }
       } catch (notifError) {
-        console.error('Error al crear notificación para GH:', notifError);
+        console.error('[REGISTRO] Error al crear notificación para GH:', notifError);
         // No fallar el registro si falla la notificación
       }
 
