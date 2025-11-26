@@ -496,6 +496,7 @@ export const IncapacidadController = {
 
       const rutaArchivo = req.file.path;
       const nombreArchivo = req.file.originalname;
+      const incapacidadId = req.body.incapacidad_id; // ID de la incapacidad para obtener el colaborador correcto
 
       // 1. Extraer texto del documento
       const { texto, confianza } = await extraerTextoDocumento(rutaArchivo, nombreArchivo);
@@ -509,8 +510,18 @@ export const IncapacidadController = {
       // 3. Analizar documento
       const { tipo, campos, errores, advertencias: advertencias_extraccion, valido } = analizarDocumento(texto);
 
-      // 4. Obtener datos del usuario
-      const usuario = await UsuarioModel.obtenerPorId(req.user.id);
+      // 4. Obtener datos del COLABORADOR dueño de la incapacidad (no del usuario que hace el análisis)
+      let usuario;
+      if (incapacidadId) {
+        const incapacidad = await IncapacidadModel.obtenerPorId(incapacidadId);
+        if (incapacidad) {
+          usuario = await UsuarioModel.obtenerPorId(incapacidad.usuario_id);
+        } else {
+          usuario = await UsuarioModel.obtenerPorId(req.user.id);
+        }
+      } else {
+        usuario = await UsuarioModel.obtenerPorId(req.user.id);
+      }
       const advertencias = [];
       
       // Incluir advertencias de extracción

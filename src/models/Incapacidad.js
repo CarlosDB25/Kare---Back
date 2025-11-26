@@ -44,7 +44,7 @@ export const IncapacidadModel = {
   async obtenerPorUsuario(usuarioId) {
     const db = getDatabase();
     return await db.all(
-      `SELECT i.*, u.nombre as usuario_nombre, u.email as usuario_email, u.ibc as usuario_ibc
+      `SELECT i.*, u.nombre as usuario_nombre, u.email as usuario_email, u.ibc as usuario_ibc, u.documento as usuario_documento
        FROM incapacidades i
        LEFT JOIN usuarios u ON i.usuario_id = u.id
        WHERE i.usuario_id = ? 
@@ -59,7 +59,7 @@ export const IncapacidadModel = {
   async obtenerTodas() {
     const db = getDatabase();
     return await db.all(`
-      SELECT i.*, u.nombre as usuario_nombre, u.email as usuario_email, u.ibc as usuario_ibc
+      SELECT i.*, u.nombre as usuario_nombre, u.email as usuario_email, u.ibc as usuario_ibc, u.documento as usuario_documento
       FROM incapacidades i 
       LEFT JOIN usuarios u ON i.usuario_id = u.id 
       ORDER BY i.created_at DESC
