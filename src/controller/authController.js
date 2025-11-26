@@ -146,7 +146,12 @@ export const AuthController = {
             id: usuario.id,
             nombre: usuario.nombre,
             email: usuario.email,
-            rol: usuario.rol
+            rol: usuario.rol,
+            documento: usuario.documento,
+            area: usuario.area,
+            cargo: usuario.cargo,
+            salario_base: usuario.salario_base,
+            ibc: usuario.ibc
           }
         }
       });
