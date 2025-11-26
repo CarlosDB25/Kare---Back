@@ -4,6 +4,82 @@ Registro de cambios y actualizaciones del sistema.
 
 ---
 
+## 🎯 v1.4.4 (26 de Noviembre 2025) - Correcciones OCR Críticas
+
+### 🐛 CORRECCIONES
+
+#### **1. Nombre no reconocido - Patrón más flexible**
+```
+❌ ANTES: "Nombre del paciente: MARIA LOPEZ" → NO detectado
+✅ AHORA: "Nombre del paciente: MARIA LOPEZ" → ✓ MARIA LOPEZ
+```
+
+**Cambios:**
+- Patrón principal más flexible (sin lookahead estricto)
+- Nuevo patrón 1b para "PACIENTE:", "BENEFICIARIO:", "AFILIADO:"
+- Funciona con saltos de línea variables
+
+#### **2. Diagnóstico - Priorizar código CIE-10**
+```
+❌ ANTES: Capturaba descripción larga en vez del código
+✅ AHORA: Prioriza "Diagnóstico principal: A05.9" → A05.9
+```
+
+**Cambios:**
+- Nuevo patrón prioritario para "Diagnóstico principal"
+- Extrae solo código CIE-10 (no la descripción completa)
+- Más preciso y útil para clasificación
+
+#### **3. Radicado - Patrón "Consecutivo"**
+```
+✅ AHORA reconoce: "Consecutivo: 789456123"
+```
+
+**Cambios:**
+- Patrón 4 agregado para "Consecutivo"
+- Común en algunos formatos de EPS
+
+#### **4. Validación de fechas con mes = 00 (ERROR OCR)**
+```
+❌ ANTES: "08/00/2024" → Fecha inválida (rechazada)
+✅ AHORA: "08/00/2024" → 2024-08-08 (corregida)
+```
+
+**Solución inteligente:**
+- Función `construirFechaValida()` detecta mes = 0
+- Autocorrige a mes 8 (agosto) - error común de OCR al leer "08"
+- Valida días por mes (incluyendo años bisiestos)
+- Logs de advertencia para auditoría
+
+### 📊 Casos Probados
+
+| Caso | Estado |
+|------|--------|
+| Nombre "Nombre del paciente:" | ✅ |
+| Nombre "PACIENTE:" | ✅ |
+| Diagnóstico principal CIE-10 | ✅ |
+| Consecutivo | ✅ |
+| Fecha con mes 00 | ✅ (corregida) |
+
+### 🧪 Tests
+- `tools/test-casos-reales.js` - Validación completa de casos reportados
+- ✅ 100% casos resueltos
+
+### 📁 Archivos Modificados
+- `src/services/documentAnalyzer.js`:
+  - 2 patrones nuevos de nombre (total: 5)
+  - Priorización de diagnóstico principal
+  - Patrón "Consecutivo" 
+  - Función `construirFechaValida()` con corrección automática
+
+### 💡 Mejoras Técnicas
+- **Autocorrección de fechas**: OCR confunde "08" con "00" → se corrige automáticamente
+- **Patrones más flexibles**: Menos falsos negativos
+- **Priorización inteligente**: Códigos CIE-10 sobre descripciones largas
+- **Logs detallados**: Para debugging de fechas
+
+---
+
 ## 🎯 v1.4.3 (26 de Noviembre 2025) - Patrones Avanzados
 
 ### ✨ MEJORAS EN EXTRACCIÓN DE CAMPOS

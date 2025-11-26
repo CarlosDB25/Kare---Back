@@ -127,6 +127,60 @@ function identificarTipo(texto) {
 }
 
 /**
+ * Construye y valida una fecha, corrigiendo errores comunes de OCR
+ * @param {string} dia - Día extraído
+ * @param {string} mes - Mes extraído
+ * @param {string} anio - Año extraído
+ * @returns {string|null} - Fecha en formato YYYY-MM-DD o null si es inválida
+ */
+function construirFechaValida(dia, mes, anio) {
+  // Convertir a números
+  let d = parseInt(dia);
+  let m = parseInt(mes);
+  const a = parseInt(anio);
+  
+  // Validar año
+  if (a < 1900 || a > 2100) return null;
+  
+  // Corregir mes = 0 (error común de OCR: 08 → 00)
+  // Si el mes es 0, probablemente el OCR confundió 08 con 00
+  if (m === 0) {
+    m = 8; // Asumir agosto (mes más común con 0)
+    console.warn(`[Fecha] Mes 0 detectado, corrigiendo a 08 (agosto)`);
+  }
+  
+  // Validar mes (1-12)
+  if (m < 1 || m > 12) {
+    console.warn(`[Fecha] Mes inválido: ${m}, descartando fecha`);
+    return null;
+  }
+  
+  // Validar día (1-31)
+  if (d < 1 || d > 31) {
+    console.warn(`[Fecha] Día inválido: ${d}, descartando fecha`);
+    return null;
+  }
+  
+  // Validar días por mes
+  const diasPorMes = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  
+  // Año bisiesto
+  if (a % 4 === 0 && (a % 100 !== 0 || a % 400 === 0)) {
+    diasPorMes[1] = 29;
+  }
+  
+  if (d > diasPorMes[m - 1]) {
+    console.warn(`[Fecha] Día ${d} inválido para mes ${m}, descartando fecha`);
+    return null;
+  }
+  
+  // Construir fecha válida
+  const fechaFormateada = `${a}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  console.log(`[Fecha] ✓ Fecha válida construida: ${fechaFormateada}`);
+  return fechaFormateada;
+}
+
+/**
  * Extrae campos específicos del texto usando expresiones regulares
  * NOTA: Regex mejorados para capturar variaciones de diferentes entidades
  * @param {string} texto - Texto del documento
@@ -154,25 +208,28 @@ function extraerCampos(texto, tipo) {
   if (matchRango) {
     // Formato de rango completo
     const [_, diaI, mesI, anioI, diaF, mesF, anioF] = matchRango;
-    fecha_inicio = `${anioI}-${mesI.padStart(2, '0')}-${diaI.padStart(2, '0')}`;
-    fecha_fin = `${anioF}-${mesF.padStart(2, '0')}-${diaF.padStart(2, '0')}`;
+    fecha_inicio = construirFechaValida(diaI, mesI, anioI);
+    fecha_fin = construirFechaValida(diaF, mesF, anioF);
   } else {
     // Fechas separadas
     if (matchInicio) {
       const [_, dia, mes, anio] = matchInicio;
-      fecha_inicio = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+      fecha_inicio = construirFechaValida(dia, mes, anio);
     }
     if (matchFin) {
       const [_, dia, mes, anio] = matchFin;
-      fecha_fin = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+      fecha_fin = construirFechaValida(dia, mes, anio);
     }
   }
   
   // 2. NOMBRE - MEJORADO: Múltiples patrones para diferentes formatos
   let nombre = null;
   
-  // Patrón 1: "Nombre del paciente: JUAN PEREZ GOMEZ"
-  const regexNombre1 = /(?:Nombre\s+(?:del\s+)?(?:paciente|afiliado|trabajador|empleado)|PACIENTE|Beneficiario|AFILIADO)[:.]?\s*(?:CC\s*\d+\s+)?([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{4,60})(?=\s*(?:\n|Tipo|Edad|Fecha|CC|C\.C|Cedula|Cédula|Sexo|Episodio|Documento|Identificación))/i;
+  // Patrón 1: "Nombre del paciente: JUAN PEREZ GOMEZ" (más flexible)
+  const regexNombre1 = /(?:Nombre\s+(?:del\s+)?(?:paciente|afiliado|trabajador|empleado))[:.]?\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{4,60})(?=\s*\n|$)/i;
+  
+  // Patrón 1b: "PACIENTE: Juan Perez" (sin requerir lookahead estricto)
+  const regexNombre1b = /(?:^|\n)(?:PACIENTE|BENEFICIARIO|AFILIADO)[:.\s]+([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{4,60})(?=\s*\n|$)/im;
   
   // Patrón 2: "NOMBRES Y APELLIDOS: Juan Carlos Pérez"
   const regexNombre2 = /(?:NOMBRES?\s+Y\s+APELLIDOS?|APELLIDOS?\s+Y\s+NOMBRES?)[:.]?\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{4,60})(?=\s*(?:\n|CC|Documento|Identificación|Tipo))/i;
@@ -184,11 +241,13 @@ function extraerCampos(texto, tipo) {
   const regexNombre4 = /(?:Cotizante|Afiliado|Trabajador|Empleado)\s+[A-Z]\s+\d{6,11}\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{10,60})(?=\s*(?:\n|Tipo|Diagnóstico|Fecha|EPS|ARL))/i;
   
   const matchNombre1 = texto.match(regexNombre1);
+  const matchNombre1b = texto.match(regexNombre1b);
   const matchNombre2 = texto.match(regexNombre2);
   const matchNombre3 = texto.match(regexNombre3);
   const matchNombre4 = texto.match(regexNombre4);
   
   if (matchNombre1) nombre = matchNombre1[1].trim();
+  else if (matchNombre1b) nombre = matchNombre1b[1].trim();
   else if (matchNombre2) nombre = matchNombre2[1].trim();
   else if (matchNombre4) nombre = matchNombre4[1].trim();
   else if (matchNombre3) nombre = matchNombre3[1].trim();
@@ -242,20 +301,27 @@ function extraerCampos(texto, tipo) {
   // 4. DIAGNÓSTICO - MEJORADO: Captura de códigos CIE-10 + descripción
   let diagnostico = null;
   
-  // Patrón 1: Código CIE-10 (ej: "Diagnóstico: J00 - Resfriado común")
-  const regexCIE10_1 = /(?:Diagn[oó]stico\s+(?:Principal|Ppal)?|Enfermedad|Patología)[:.]?\s*(?:\()?([A-Z]\d{2}(?:\.\d{1,2})?)(?:\))?(?:\s*[-:]?\s*([^\n]{5,150}))?/i;
+  // Patrón 1 (PRIORITARIO): "Diagnóstico principal: A05.9" (buscar explícitamente "principal" + código)
+  const regexCIE10_principal = /(?:Diagn[oó]stico\s+(?:Principal|Ppal))[:.]?\s*([A-Z]\d{2}(?:\.\d{1,2})?)/i;
   
-  // Patrón 2: Descripción sin código
+  // Patrón 2: "Diagnóstico: J00 - Resfriado común"
+  const regexCIE10_1 = /(?:Diagn[oó]stico|Enfermedad|Patología)[:.]?\s*(?:\()?([A-Z]\d{2}(?:\.\d{1,2})?)(?:\))?(?:\s*[-:]?\s*([^\n]{5,150}))?/i;
+  
+  // Patrón 3: Descripción sin código (menos prioritario)
   const regexDiagTexto = /(?:Diagn[oó]stico|Observaciones?|Concepto(?:\s+de)?\s+(?:la\s+)?Incapacidad|Motivo)[:.]?\s*([A-Z][^\n]{15,200})(?=\n|$)/i;
   
-  // Patrón 3: Código CIE-10 suelto en el documento
+  // Patrón 4: Código CIE-10 suelto en el documento (última opción)
   const regexCIE10_solo = /\b([A-Z]\d{2}(?:\.\d{1,2})?)\b/;
   
+  const matchCIE_principal = texto.match(regexCIE10_principal);
   const matchCIE1 = texto.match(regexCIE10_1);
   const matchDiag = texto.match(regexDiagTexto);
   const matchCIE_solo = texto.match(regexCIE10_solo);
   
-  if (matchCIE1) {
+  // Priorizar "Diagnóstico principal"
+  if (matchCIE_principal) {
+    diagnostico = matchCIE_principal[1]; // Solo código CIE-10 principal
+  } else if (matchCIE1) {
     diagnostico = matchCIE1[1]; // Código CIE-10
     if (matchCIE1[2]) {
       // Limpiar y agregar descripción
@@ -286,11 +352,16 @@ function extraerCampos(texto, tipo) {
   // Patrón 3: "N°. RADICADO: 123456"
   const regexRadicado3 = /N(?:o|°|º|ú|u|úm|um)\.?\s*(?:de\s+)?(?:RADICADO|INCAPACIDAD|CERTIFICADO|AUTORIZACIÓN)[:.\s]*(\d{6,15})/i;
   
+  // Patrón 4: "Consecutivo: 123456" o "Consecutivo 123456"
+  const regexConsecutivo = /Consecutivo[:.\s]*(\d{6,15})/i;
+  
   const matchRadicado1 = texto.match(regexRadicado1);
   const matchRadicado2 = texto.match(regexRadicado2);
   const matchRadicado3 = texto.match(regexRadicado3);
+  const matchConsecutivo = texto.match(regexConsecutivo);
   
   if (matchRadicado2) numero_radicado = matchRadicado2[1]; // Priorizar "Nro. Incapacidad"
+  else if (matchConsecutivo) numero_radicado = matchConsecutivo[1]; // "Consecutivo"
   else if (matchRadicado3) numero_radicado = matchRadicado3[1];
   else if (matchRadicado1) numero_radicado = matchRadicado1[1];
   
