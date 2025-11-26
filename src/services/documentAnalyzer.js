@@ -134,60 +134,134 @@ function identificarTipo(texto) {
  * @returns {object} - Campos extraídos
  */
 function extraerCampos(texto, tipo) {
-  // 1. FECHAS DE INCAPACIDAD (ignorar fechas de nacimiento)
-  // Buscar específicamente fechas de inicio y fin de incapacidad
-  const regexFechaInicio = /(?:Fecha\s+(?:de\s+)?(?:inicio|inicial)(?:\s+(?:de\s+)?incapacidad)?|Fecha\s+inicio\s+incapacidad)[:.]?\s*(\d{2})[\/\-](\d{2})[\/\-](\d{4})/i;
-  const regexFechaFin = /(?:Fecha\s+(?:de\s+)?(?:fin|final|terminaci[oó]n|egreso)(?:\s+(?:de\s+)?incapacidad)?|Fecha\s+fin\s+incapacidad)[:.]?\s*(\d{2})[\/\-](\d{2})[\/\-](\d{4})/i;
+  // 1. FECHAS DE INCAPACIDAD - Múltiples formatos y validación contextual
+  let fecha_inicio = null;
+  let fecha_fin = null;
   
-  const matchInicio = texto.match(regexFechaInicio);
-  const matchFin = texto.match(regexFechaFin);
+  // Patrón 1: "Fecha inicio: 01/12/2024" o "Desde: 01-12-2024"
+  const regexInicio1 = /(?:Fecha\s+(?:de\s+)?(?:inicio|inicial)(?:\s+(?:de\s+)?incapacidad)?|Desde|Inicia|Inicio\s+incapacidad)[:.]?\s*(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/i;
   
-  const fechas = [];
-  if (matchInicio) {
-    const [_, dia, mes, anio] = matchInicio;
-    fechas.push(`${anio}-${mes}-${dia}`);
-  }
-  if (matchFin) {
-    const [_, dia, mes, anio] = matchFin;
-    fechas.push(`${anio}-${mes}-${dia}`);
-  }
+  // Patrón 2: "Fecha fin: 05/12/2024" o "Hasta: 05-12-2024"
+  const regexFin1 = /(?:Fecha\s+(?:de\s+)?(?:fin|final|terminaci[oó]n|t[ée]rmino|egreso)(?:\s+(?:de\s+)?incapacidad)?|Hasta|Termina|Fin\s+incapacidad)[:.]?\s*(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/i;
   
-  // 2. NOMBRE - MEJORADO: Buscar nombre completo (al menos 2 palabras)
-  // Captura después de: NOMBRE, PACIENTE, AFILIADO, etc. y requiere al menos 2 palabras
-  const regexNombre = /(?:Nombre\s+(?:del\s+)?(?:paciente|afiliado)|PACIENTE|Beneficiario)[:.]?\s*(?:CC\s*\d+\s+)?([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){1,4})(?=\s+(?:Tipo|Edad|Fecha|CC|C\.C|Cedula|Cédula|Sexo|Episodio)|$)/i;
-  const matchNombre = texto.match(regexNombre);
-  let nombre = matchNombre?.[1]?.trim();
+  // Patrón 3: "Del 01/12/2024 al 05/12/2024"
+  const regexRango = /(?:Del|Desde)\s+(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})\s+(?:al|hasta)\s+(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/i;
   
-  // Validar que el nombre tenga al menos 2 palabras (nombre y apellido)
-  if (nombre && nombre.split(/\s+/).length < 2) {
-    nombre = null; // Descartar nombres de una sola palabra como "Contributivo" o "Empleado"
-  }
+  const matchInicio = texto.match(regexInicio1);
+  const matchFin = texto.match(regexFin1);
+  const matchRango = texto.match(regexRango);
   
-  // 3. DOCUMENTO DE IDENTIDAD - MEJORADO: Más variaciones
-  // Captura después de: CC, C.C., CEDULA, DOCUMENTO, IDENTIFICACION, No. ID, etc.
-  const regexDoc = /(?:CC|C\.C\.|CEDULA|CÉDULA|DOCUMENTO(?:\s+(?:DE\s+)?IDENTIDAD)?|IDENTIFICACION|IDENTIFICACIÓN|N(?:o|°|º)?\.?\s*(?:DE\s+)?(?:ID|DOCUMENTO|IDENTIFICACIÓN))[:.\s]*(\d{6,11})/i;
-  const matchDoc = texto.match(regexDoc);
-  const documento = matchDoc?.[1];
-  
-  // 4. DIAGNÓSTICO - MEJORADO: Buscar códigos CIE-10 y descripciones
-  // Primero buscar código CIE-10 (formato: letra + 2-3 dígitos, ej: A07.1, N30)
-  const regexCIE10 = /(?:Diagn[oó]stico\s+(?:Principal|Ppal|paciente)|Tipo\s+Incapacidad|Diagnostico)[:.]?\s*(?:\()?([A-Z]\d{2,3}(?:\.\d)?)/i;
-  const matchCIE = texto.match(regexCIE10);
-  
-  // Luego buscar descripción completa del diagnóstico
-  const regexDiagTexto = /(?:Diagn[oó]stico(?:\s+(?:Principal|Ppal|paciente))?|Observaciones|Concepto\s+Incapacidad)[:.]?\s*(.{20,300})(?=\n(?:Tipo|Firma|Profesional|Responsable|Fecha|--|$))/i;
-  const matchDiagTexto = texto.match(regexDiagTexto);
-  
-  let diagnostico = null;
-  if (matchCIE) {
-    diagnostico = matchCIE[1].trim();
-    // Si hay descripción, agregarla
-    if (matchDiagTexto) {
-      const descripcion = matchDiagTexto[1].trim().substring(0, 150);
-      diagnostico += ` - ${descripcion}`;
+  if (matchRango) {
+    // Formato de rango completo
+    const [_, diaI, mesI, anioI, diaF, mesF, anioF] = matchRango;
+    fecha_inicio = `${anioI}-${mesI.padStart(2, '0')}-${diaI.padStart(2, '0')}`;
+    fecha_fin = `${anioF}-${mesF.padStart(2, '0')}-${diaF.padStart(2, '0')}`;
+  } else {
+    // Fechas separadas
+    if (matchInicio) {
+      const [_, dia, mes, anio] = matchInicio;
+      fecha_inicio = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
     }
-  } else if (matchDiagTexto) {
-    diagnostico = matchDiagTexto[1].trim().substring(0, 200);
+    if (matchFin) {
+      const [_, dia, mes, anio] = matchFin;
+      fecha_fin = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+    }
+  }
+  
+  // 2. NOMBRE - MEJORADO: Múltiples patrones para diferentes formatos
+  let nombre = null;
+  
+  // Patrón 1: "Nombre del paciente: JUAN PEREZ GOMEZ"
+  const regexNombre1 = /(?:Nombre\s+(?:del\s+)?(?:paciente|afiliado|trabajador|empleado)|PACIENTE|Beneficiario|AFILIADO)[:.]?\s*(?:CC\s*\d+\s+)?([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{4,60})(?=\s*(?:\n|Tipo|Edad|Fecha|CC|C\.C|Cedula|Cédula|Sexo|Episodio|Documento|Identificación))/i;
+  
+  // Patrón 2: "NOMBRES Y APELLIDOS: Juan Carlos Pérez"
+  const regexNombre2 = /(?:NOMBRES?\s+Y\s+APELLIDOS?|APELLIDOS?\s+Y\s+NOMBRES?)[:.]?\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{4,60})(?=\s*(?:\n|CC|Documento|Identificación|Tipo))/i;
+  
+  // Patrón 3: Línea que empieza con nombre (después de encabezados)
+  const regexNombre3 = /(?:Datos\s+del\s+Paciente|Información\s+Personal)[\s\S]{0,100}?\n\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){0,3})\s*(?:\n|CC)/i;
+  
+  const matchNombre1 = texto.match(regexNombre1);
+  const matchNombre2 = texto.match(regexNombre2);
+  const matchNombre3 = texto.match(regexNombre3);
+  
+  if (matchNombre1) nombre = matchNombre1[1].trim();
+  else if (matchNombre2) nombre = matchNombre2[1].trim();
+  else if (matchNombre3) nombre = matchNombre3[1].trim();
+  
+  // Validar y limpiar nombre
+  if (nombre) {
+    nombre = nombre.replace(/\s+/g, ' ').trim();
+    const palabras = nombre.split(' ');
+    // Debe tener al menos 2 palabras y no contener palabras clave de formulario
+    const palabrasInvalidas = ['CONTRIBUTIVO', 'SUBSIDIADO', 'VINCULADO', 'EMPLEADO', 'AFILIADO', 'TIPO', 'REGIMEN'];
+    if (palabras.length < 2 || palabras.some(p => palabrasInvalidas.includes(p.toUpperCase()))) {
+      nombre = null;
+    }
+  }
+  
+  // 3. DOCUMENTO DE IDENTIDAD - MEJORADO: Múltiples patrones robustos
+  let documento = null;
+  
+  // Patrón 1: "CC: 1234567890" o "C.C. 1234567890"
+  const regexDoc1 = /(?:^|\s|\n)(?:CC|C\.C\.|CEDULA|CÉDULA)[:.]?\s*(\d{6,11})(?=\s|\n|$)/i;
+  
+  // Patrón 2: "Documento de Identidad: 1234567890"
+  const regexDoc2 = /(?:DOCUMENTO(?:\s+(?:DE\s+)?IDENTIDAD)?|IDENTIFICACION|IDENTIFICACIÓN)[:.]?\s*(\d{6,11})/i;
+  
+  // Patrón 3: "No. Identificación: 1234567890"
+  const regexDoc3 = /N(?:o|°|º|ú|u|úm|um)\.?\s*(?:DE\s+)?(?:ID|IDENTIFICACIÓN|IDENTIFICACION|DOCUMENTO)[:.]?\s*(\d{6,11})/i;
+  
+  // Patrón 4: Número aislado de 7-10 dígitos después de "CC" en la misma línea del nombre
+  const regexDoc4 = /(?:PACIENTE|AFILIADO|NOMBRE)[\s\S]{0,80}?CC[:.\s]*(\d{7,10})(?=\s|\n)/i;
+  
+  const matchDoc1 = texto.match(regexDoc1);
+  const matchDoc2 = texto.match(regexDoc2);
+  const matchDoc3 = texto.match(regexDoc3);
+  const matchDoc4 = texto.match(regexDoc4);
+  
+  if (matchDoc1) documento = matchDoc1[1];
+  else if (matchDoc2) documento = matchDoc2[1];
+  else if (matchDoc3) documento = matchDoc3[1];
+  else if (matchDoc4) documento = matchDoc4[1];
+  
+  // Validar longitud (CC colombiana: 6-11 dígitos, usualmente 7-10)
+  if (documento && (documento.length < 6 || documento.length > 11)) {
+    documento = null;
+  }
+  
+  // 4. DIAGNÓSTICO - MEJORADO: Captura de códigos CIE-10 + descripción
+  let diagnostico = null;
+  
+  // Patrón 1: Código CIE-10 (ej: "Diagnóstico: J00 - Resfriado común")
+  const regexCIE10_1 = /(?:Diagn[oó]stico\s+(?:Principal|Ppal)?|Enfermedad|Patología)[:.]?\s*(?:\()?([A-Z]\d{2}(?:\.\d{1,2})?)(?:\))?(?:\s*[-:]?\s*([^\n]{5,150}))?/i;
+  
+  // Patrón 2: Descripción sin código
+  const regexDiagTexto = /(?:Diagn[oó]stico|Observaciones?|Concepto(?:\s+de)?\s+(?:la\s+)?Incapacidad|Motivo)[:.]?\s*([A-Z][^\n]{15,200})(?=\n|$)/i;
+  
+  // Patrón 3: Código CIE-10 suelto en el documento
+  const regexCIE10_solo = /\b([A-Z]\d{2}(?:\.\d{1,2})?)\b/;
+  
+  const matchCIE1 = texto.match(regexCIE10_1);
+  const matchDiag = texto.match(regexDiagTexto);
+  const matchCIE_solo = texto.match(regexCIE10_solo);
+  
+  if (matchCIE1) {
+    diagnostico = matchCIE1[1]; // Código CIE-10
+    if (matchCIE1[2]) {
+      // Limpiar y agregar descripción
+      let desc = matchCIE1[2].trim()
+        .replace(/\s+/g, ' ')
+        .substring(0, 150);
+      diagnostico += ` - ${desc}`;
+    }
+  } else if (matchDiag) {
+    // Solo descripción
+    diagnostico = matchDiag[1].trim()
+      .replace(/\s+/g, ' ')
+      .substring(0, 200);
+  } else if (matchCIE_solo) {
+    // Solo código encontrado
+    diagnostico = matchCIE_solo[1];
   }
   
   // 5. NÚMERO DE RADICADO / INCAPACIDAD - MEJORADO: Patrones variables
@@ -219,8 +293,8 @@ function extraerCampos(texto, tipo) {
     tipo,
     nombre,
     documento,
-    fecha_inicio: fechas[0] || null,     // Primera fecha encontrada
-    fecha_fin: fechas[1] || null,         // Segunda fecha encontrada
+    fecha_inicio,
+    fecha_fin,
     diagnostico,
     numero_radicado,
     dias_totales: dias,
