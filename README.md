@@ -38,12 +38,18 @@ curl https://kare-back.onrender.com/api/usuarios \
 - 👥 **Usuarios de prueba:** 8 precargados
 - 🔐 **Autenticación:** JWT activa
 - 📦 **Base de datos:** SQLite persistente
+- 📚 **Documentación:** Swagger UI interactiva
 
 **🎯 Casos de uso:**
 - **Desarrolladores frontend:** Usar directamente sin clonar repositorio
 - **Pruebas rápidas:** Verificar endpoints sin configuración local
 - **Demos:** Mostrar funcionalidad en presentaciones
 - **Testing:** Suite de tests de producción validada
+
+**📖 Documentación Interactiva:**
+- 🚀 **Swagger UI (Producción):** [https://kare-back.onrender.com/api-docs](https://kare-back.onrender.com/api-docs)
+- 💻 **Swagger UI (Local):** `http://localhost:3000/api-docs` (después de iniciar el servidor)
+- 📄 **JSON OpenAPI:** `http://localhost:3000/api-docs.json`
 
 [👉 Ver todos los endpoints disponibles](#-api-endpoints)
 
@@ -257,7 +263,27 @@ curl -X POST http://localhost:3000/api/auth/login \
 
 ## 📡 API Endpoints
 
-### 🔐 Autenticación
+### 🎯 Documentación Interactiva con Swagger
+
+**La forma más fácil de explorar la API es usando Swagger UI:**
+
+```
+🌐 Producción: https://kare-back.onrender.com/api-docs
+💻 Local: http://localhost:3000/api-docs
+```
+
+**Swagger UI te permite:**
+- ✅ Ver todos los endpoints disponibles organizados por categorías
+- ✅ Probar cada endpoint directamente desde el navegador
+- ✅ Ver ejemplos de request/response
+- ✅ Autenticarte con JWT fácilmente (botón "Authorize")
+- ✅ Descargar la especificación OpenAPI 3.0
+
+---
+
+### 📋 Resumen de Endpoints
+
+### 🔐 Autenticación (3 endpoints)
 ```http
 POST /api/auth/register    # Registrar nuevo usuario
 POST /api/auth/login       # Login → retorna JWT
@@ -266,9 +292,10 @@ GET  /api/auth/profile     # Obtener perfil (requiere token)
 
 ### 📄 Incapacidades
 ```http
-POST   /api/incapacidades                    # Crear (con validaciones automáticas)
+POST   /api/incapacidades                    # Crear (con validaciones automáticas + documento obligatorio)
 GET    /api/incapacidades                    # Listar (filtrado por rol)
 GET    /api/incapacidades/:id                # Obtener por ID
+PUT    /api/incapacidades/:id                # Actualizar incapacidad rechazada (solo dueño)
 PUT    /api/incapacidades/:id/estado         # Cambiar estado (GH/Conta)
 DELETE /api/incapacidades/:id                # Eliminar (GH/Conta o dueño si reportada)
 POST   /api/incapacidades/:id/documento      # Subir/actualizar documento PDF/imagen
@@ -276,9 +303,15 @@ GET    /api/incapacidades/:id/documento      # Descargar documento
 POST   /api/incapacidades/validar-documento  # OCR - Extracción y validación automática
 ```
 
+**✨ NUEVO: Endpoint PUT /api/incapacidades/:id**
+- Permite actualizar datos de incapacidades en estado 'rechazada'
+- Solo el colaborador dueño puede actualizar
+- Campos actualizables: diagnóstico, fecha_inicio, fecha_fin, observaciones
+- Ideal para corregir incapacidades rechazadas por GH
+
 **OCR automático:** El endpoint `/validar-documento` acepta PDF/PNG/JPG/JPEG/WEBP, extrae campos (diagnóstico, fechas, entidad, nombre), retorna advertencias (no bloqueantes) y sugerencias de acción (APROBAR, REVISAR_MANUALMENTE, RECHAZAR).
 
-### 🔔 Notificaciones
+### 🔔 Notificaciones (6 endpoints)
 ```http
 GET    /api/notificaciones                   # Listar mis notificaciones
 GET    /api/notificaciones/no-leidas/count   # Contador de no leídas

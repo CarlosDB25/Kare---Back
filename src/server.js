@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { initDatabase } from './db/database.js';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger.js';
 
 // Importar rutas
 import authRoutes from './routes/authRoutes.js';
@@ -29,6 +31,21 @@ app.use(express.urlencoded({ extended: true }));
 
 // Servir archivos estáticos (uploads)
 app.use('/uploads', express.static(join(__dirname, 'uploads')));
+
+// ========================================
+// SWAGGER - Documentación Interactiva
+// ========================================
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'KARE API Documentation',
+  customfavIcon: '/favicon.ico'
+}));
+
+// Endpoint JSON de Swagger para herramientas externas
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 
 // Ruta raíz - Página de bienvenida
 app.get('/', (req, res) => {
@@ -135,6 +152,18 @@ app.get('/', (req, res) => {
         
         <div class="status">
           API activa y operacional
+        </div>
+        
+        <div class="section">
+          <h2>📚 Documentación Interactiva</h2>
+          <p style="margin-bottom: 16px;">
+            <a href="${req.protocol}://${req.get('host')}/api-docs" target="_blank" style="font-size: 1.1rem;">
+              🚀 Ver documentación Swagger UI
+            </a>
+          </p>
+          <p style="color: #666; font-size: 0.9rem;">
+            Prueba todos los endpoints directamente desde tu navegador
+          </p>
         </div>
         
         <div class="section">
