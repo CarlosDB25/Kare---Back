@@ -12,7 +12,7 @@ export const AuthController = {
    */
   async register(req, res) {
     try {
-      const { nombre, email, password, rol } = req.body;
+      const { nombre, email, password, rol, documento } = req.body;
 
       // Validar datos
       if (!nombre || !email || !password || !rol) {
@@ -24,7 +24,7 @@ export const AuthController = {
       }
 
       // Validar rol
-      const rolesValidos = ['colab', 'gh', 'lider', 'conta'];
+      const rolesValidos = ['colaborador', 'gh', 'lider', 'conta'];
       if (!rolesValidos.includes(rol)) {
         return res.status(400).json({
           success: false,
@@ -51,13 +51,14 @@ export const AuthController = {
         nombre,
         email,
         password: passwordHash,
-        rol
+        rol,
+        documento
       });
 
       res.status(201).json({
         success: true,
         message: 'Usuario registrado exitosamente',
-        data: { id: usuarioId, nombre, email, rol }
+        data: { id: usuarioId, nombre, email, rol, documento }
       });
     } catch (error) {
       console.error('Error en register:', error);

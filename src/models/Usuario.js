@@ -9,11 +9,11 @@ export const UsuarioModel = {
    */
   async crear(usuario) {
     const db = getDatabase();
-    const { nombre, email, password, rol } = usuario;
+    const { nombre, email, password, rol, documento } = usuario;
 
     const result = await db.run(
-      'INSERT INTO usuarios (nombre, email, password, rol) VALUES (?, ?, ?, ?)',
-      [nombre, email, password, rol]
+      'INSERT INTO usuarios (nombre, email, password, rol, documento) VALUES (?, ?, ?, ?, ?)',
+      [nombre, email, password, rol, documento]
     );
 
     return result.lastID;
