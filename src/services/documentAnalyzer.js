@@ -142,11 +142,12 @@ function construirFechaValida(dia, mes, anio) {
   // Validar año
   if (a < 1900 || a > 2100) return null;
   
-  // Corregir mes = 0 (error común de OCR: 08 → 00)
-  // Si el mes es 0, probablemente el OCR confundió 08 con 00
+  // Corregir mes = 0 (error común de OCR: 01 → 00, 08 → 00)
+  // Si el mes es 0, probablemente el OCR confundió un dígito
   if (m === 0) {
-    m = 8; // Asumir agosto (mes más común con 0)
-    console.warn(`[Fecha] Mes 0 detectado, corrigiendo a 08 (agosto)`);
+    // Intentar inferir: si el día es válido y razonable, asumir mes 1 (enero)
+    m = 1; 
+    console.warn(`[Fecha] Mes 0 detectado, corrigiendo a 01 (enero)`);
   }
   
   // Validar mes (1-12)
@@ -231,6 +232,9 @@ function extraerCampos(texto, tipo) {
   // Patrón 1b: "PACIENTE: Juan Perez" (sin requerir lookahead estricto)
   const regexNombre1b = /(?:^|\n)(?:PACIENTE|BENEFICIARIO|AFILIADO)[:.\s]+([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{4,60})(?=\s*\n|$)/im;
   
+  // Patrón 1c: "Nombre: JUAN PEREZ" (solo "Nombre" sin "del paciente")
+  const regexNombre1c = /(?:^|\n)Nombre[:.]?\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{4,60})(?=\s*\n|Tipo|Edad|Fecha|CC|Documento)/im;
+  
   // Patrón 2: "NOMBRES Y APELLIDOS: Juan Carlos Pérez"
   const regexNombre2 = /(?:NOMBRES?\s+Y\s+APELLIDOS?|APELLIDOS?\s+Y\s+NOMBRES?)[:.]?\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{4,60})(?=\s*(?:\n|CC|Documento|Identificación|Tipo))/i;
   
@@ -242,11 +246,13 @@ function extraerCampos(texto, tipo) {
   
   const matchNombre1 = texto.match(regexNombre1);
   const matchNombre1b = texto.match(regexNombre1b);
+  const matchNombre1c = texto.match(regexNombre1c);
   const matchNombre2 = texto.match(regexNombre2);
   const matchNombre3 = texto.match(regexNombre3);
   const matchNombre4 = texto.match(regexNombre4);
   
   if (matchNombre1) nombre = matchNombre1[1].trim();
+  else if (matchNombre1c) nombre = matchNombre1c[1].trim(); // Priorizar "Nombre:" simple
   else if (matchNombre1b) nombre = matchNombre1b[1].trim();
   else if (matchNombre2) nombre = matchNombre2[1].trim();
   else if (matchNombre4) nombre = matchNombre4[1].trim();
@@ -355,13 +361,18 @@ function extraerCampos(texto, tipo) {
   // Patrón 4: "Consecutivo: 123456" o "Consecutivo 123456"
   const regexConsecutivo = /Consecutivo[:.\s]*(\d{6,15})/i;
   
+  // Patrón 5: "INCAPACIDAD - ENFERMEDAD GENERAL No. 7282035" (encabezado)
+  const regexEncabezadoNo = /(?:INCAPACIDAD|CERTIFICADO|CONSTANCIA)[\s\-]+(?:ENFERMEDAD|ACCIDENTE|TRABAJO)[\s\w]*No\.?\s+(\d{5,15})/i;
+  
   const matchRadicado1 = texto.match(regexRadicado1);
   const matchRadicado2 = texto.match(regexRadicado2);
   const matchRadicado3 = texto.match(regexRadicado3);
   const matchConsecutivo = texto.match(regexConsecutivo);
+  const matchEncabezado = texto.match(regexEncabezadoNo);
   
   if (matchRadicado2) numero_radicado = matchRadicado2[1]; // Priorizar "Nro. Incapacidad"
   else if (matchConsecutivo) numero_radicado = matchConsecutivo[1]; // "Consecutivo"
+  else if (matchEncabezado) numero_radicado = matchEncabezado[1]; // Encabezado "No. 123456"
   else if (matchRadicado3) numero_radicado = matchRadicado3[1];
   else if (matchRadicado1) numero_radicado = matchRadicado1[1];
   

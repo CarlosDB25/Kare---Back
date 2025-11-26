@@ -4,6 +4,35 @@ Registro de cambios y actualizaciones del sistema.
 
 ---
 
+## [1.4.5] - 2025-01-31
+
+### 🔧 Mejoras en Reconocimiento de Campos OCR
+
+#### Mejoras Implementadas
+1. **Patrón de nombre simple**: Añadido patrón `regexNombre1c` para reconocer "Nombre: JUAN PEREZ" sin requerir "del paciente"
+   - Prioriza formato simple sobre variantes más específicas
+   - Mejora detección cuando el documento solo dice "Nombre:" sin calificadores
+
+2. **Corrección de autocorrección de fecha**: Cambiado mes inválido `00` → `01` (enero) en lugar de `08` (agosto)
+   - Actualizado `construirFechaValida()` para usar lógica más coherente
+   - Corrige error común de OCR en meses mal leídos
+
+3. **Patrón de radicado en encabezado**: Añadido `regexEncabezadoNo` para capturar formatos como:
+   - "INCAPACIDAD - ENFERMEDAD GENERAL No. 7282035"
+   - "CERTIFICADO - ACCIDENTE TRABAJO No. 123456"
+   - Detecta números en encabezados de documentos institucionales
+
+#### Patrones Actualizados
+- **Nombre**: Ahora 6 patrones (agregado `regexNombre1c`)
+- **Radicado**: Ahora 5 patrones (agregado `regexEncabezadoNo`)
+
+#### Impacto
+- ✅ Mayor cobertura para formatos institucionales estándar
+- ✅ Corrección más inteligente de errores OCR en fechas
+- ✅ Mejor detección en documentos minimalistas
+
+---
+
 ## 🎯 v1.4.4 (26 de Noviembre 2025) - Correcciones OCR Críticas
 
 ### 🐛 CORRECCIONES
