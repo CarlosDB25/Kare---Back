@@ -226,8 +226,8 @@ function extraerCampos(texto, tipo) {
   // 2. NOMBRE - MEJORADO: Múltiples patrones para diferentes formatos
   let nombre = null;
   
-  // Patrón 1: "Nombre del paciente: JUAN PEREZ GOMEZ" (más flexible)
-  const regexNombre1 = /(?:Nombre\s+(?:del\s+)?(?:paciente|afiliado|trabajador|empleado))[:.]?\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{4,60})(?=\s*\n|$)/i;
+  // Patrón 1: "Nombre del paciente: JUAN PEREZ GOMEZ" (más flexible, tolera caracteres OCR)
+  const regexNombre1 = /(?:Nombre\s+(?:del\s+)?(?:paciente|afiliado|trabajador|empleado))[:.]?\s*[—\-–]*\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{4,60})(?=\s*[—\-–]*\s*(?:\n|Tipo|Edad|Documento|CC|Sexo|Fecha|$))/i;
   
   // Patrón 1b: "PACIENTE: Juan Perez" (sin requerir lookahead estricto)
   const regexNombre1b = /(?:^|\n)(?:PACIENTE|BENEFICIARIO|AFILIADO)[:.\s]+([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{4,60})(?=\s*\n|$)/im;
@@ -241,8 +241,11 @@ function extraerCampos(texto, tipo) {
   // Patrón 3: Línea que empieza con nombre (después de encabezados)
   const regexNombre3 = /(?:Datos\s+del\s+Paciente|Información\s+Personal)[\s\S]{0,100}?\n\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){0,3})\s*(?:\n|CC)/i;
   
-  // Patrón 4: "Cotizante C 1234567890 APELLIDO1 APELLIDO2 NOMBRE" (formato ARL/EPS específico)
-  const regexNombre4 = /(?:Cotizante|Afiliado|Trabajador|Empleado)\s+[A-Z]\s+\d{6,11}\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{10,60})(?=\s*(?:\n|Tipo|Diagnóstico|Fecha|EPS|ARL))/i;
+  // Patrón 4: "Cotizante C 1234567890 APELLIDO1 APELLIDO2 NOMBRE" (formato ARL/EPS específico con espacios múltiples)
+  const regexNombre4 = /(?:Cotizante|Afiliado|Trabajador|Empleado)\s+[A-Z]\s+\d{6,11}\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{10,60})(?=\s*(?:\n|Edad|Tipo|Diagnóstico|Fecha|EPS|ARL))/i;
+  
+  // Patrón 5: "Beneficiario CC1003689434 Karen Julieth Pinzon Fique" (formato EPS)
+  const regexNombre5 = /(?:Beneficiario|Titular)\s+(?:CC|C\.?C\.?)?\s*\d{6,11}\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{8,60})(?=\s*(?:\n|Edad|Tipo|Sexo|Trabajador))/i;
   
   const matchNombre1 = texto.match(regexNombre1);
   const matchNombre1b = texto.match(regexNombre1b);
@@ -250,9 +253,11 @@ function extraerCampos(texto, tipo) {
   const matchNombre2 = texto.match(regexNombre2);
   const matchNombre3 = texto.match(regexNombre3);
   const matchNombre4 = texto.match(regexNombre4);
+  const matchNombre5 = texto.match(regexNombre5);
   
   if (matchNombre1) nombre = matchNombre1[1].trim();
   else if (matchNombre1c) nombre = matchNombre1c[1].trim(); // Priorizar "Nombre:" simple
+  else if (matchNombre5) nombre = matchNombre5[1].trim(); // "Beneficiario CC123 NOMBRE"
   else if (matchNombre1b) nombre = matchNombre1b[1].trim();
   else if (matchNombre2) nombre = matchNombre2[1].trim();
   else if (matchNombre4) nombre = matchNombre4[1].trim();
@@ -362,7 +367,7 @@ function extraerCampos(texto, tipo) {
   const regexConsecutivo = /Consecutivo[:.\s]*(\d{6,15})/i;
   
   // Patrón 5: "INCAPACIDAD - ENFERMEDAD GENERAL No. 7282035" (encabezado)
-  const regexEncabezadoNo = /(?:INCAPACIDAD|CERTIFICADO|CONSTANCIA)[\s\-]+(?:ENFERMEDAD|ACCIDENTE|TRABAJO)[\s\w]*No\.?\s+(\d{5,15})/i;
+  const regexEncabezadoNo = /(?:INCAPACIDAD|CERTIFICADO|CONSTANCIA)[\s\-]+[\w\s]*No\.?\s+(\d{5,15})/i;
   
   const matchRadicado1 = texto.match(regexRadicado1);
   const matchRadicado2 = texto.match(regexRadicado2);
@@ -370,17 +375,42 @@ function extraerCampos(texto, tipo) {
   const matchConsecutivo = texto.match(regexConsecutivo);
   const matchEncabezado = texto.match(regexEncabezadoNo);
   
-  if (matchRadicado2) numero_radicado = matchRadicado2[1]; // Priorizar "Nro. Incapacidad"
-  else if (matchConsecutivo) numero_radicado = matchConsecutivo[1]; // "Consecutivo"
-  else if (matchEncabezado) numero_radicado = matchEncabezado[1]; // Encabezado "No. 123456"
-  else if (matchRadicado3) numero_radicado = matchRadicado3[1];
-  else if (matchRadicado1) numero_radicado = matchRadicado1[1];
+  // Priorizar: Encabezado → Nro. específico → Consecutivo → N°. → Genérico
+  if (matchEncabezado) numero_radicado = matchEncabezado[1]; // Encabezado "INCAPACIDAD... No. 123456"
+  else if (matchRadicado2) numero_radicado = matchRadicado2[1]; // "Nro. Incapacidad 123456"
+  else if (matchConsecutivo) numero_radicado = matchConsecutivo[1]; // "Consecutivo 123456"
+  else if (matchRadicado3) numero_radicado = matchRadicado3[1]; // "N°. RADICADO 123456"
+  else if (matchRadicado1) numero_radicado = matchRadicado1[1]; // Genérico
   
   // 6. DÍAS DE INCAPACIDAD - MEJORADO: Más variaciones
-  // Captura: "Días: 5", "Días de incapacidad: 5", "Duración: 5 días", etc.
-  const regexDias = /(?:Días?(?:\s+(?:de\s+)?incapacidad)?|Duración(?:\s+(?:de\s+)?(?:la\s+)?incapacidad)?)[:.\s]*(\d{1,3})(?:\s+días?)?/i;
-  const matchDias = texto.match(regexDias);
-  const dias = matchDias?.[1] ? parseInt(matchDias[1]) : null;
+  let dias = null;
+  
+  // Patrón 1: "Días: 3" o "Días de incapacidad: 5" o "Días de Incapacidad    32"
+  const regexDias1 = /(?:Días?(?:\s+de)?(?:\s+[Ii]ncapacidad)?)[:.]?\s+(\d{1,3})(?:\s*días?)?/i;
+  
+  // Patrón 2: "Incapacidad por: 7 días"
+  const regexDias2 = /[Ii]ncapacidad\s+por[:.]?\s*(\d{1,3})\s*días?/i;
+  
+  // Patrón 3: "Total días: 10"
+  const regexDias3 = /Total\s+días[:.]?\s*(\d{1,3})/i;
+  
+  // Patrón 4: "2 día(s)" o "32 días"
+  const regexDias4 = /(\d{1,3})\s*día?\(s\)/i;
+  
+  // Patrón 5: Buscar número antes de "día" o "días"
+  const regexDias5 = /(\d{1,3})\s*días?/i;
+  
+  const matchDias1 = texto.match(regexDias1);
+  const matchDias2 = texto.match(regexDias2);
+  const matchDias3 = texto.match(regexDias3);
+  const matchDias4 = texto.match(regexDias4);
+  const matchDias5 = texto.match(regexDias5);
+  
+  if (matchDias1) dias = parseInt(matchDias1[1]);
+  else if (matchDias2) dias = parseInt(matchDias2[1]);
+  else if (matchDias3) dias = parseInt(matchDias3[1]);
+  else if (matchDias4) dias = parseInt(matchDias4[1]);
+  else if (matchDias5) dias = parseInt(matchDias5[1]);
   
   // 7. EPS/ARL - MEJORADO: Extrae nombre de entidad con más variaciones
   // Captura: "EPS Sura", "SURA EPS", "Compensar", "Nueva EPS", "ARL Colpatria", etc.
