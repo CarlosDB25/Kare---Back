@@ -3,6 +3,16 @@
 
 import Tesseract from 'tesseract.js';
 import fs from 'fs';
+import { createRequire } from 'module';
+
+// Importar pdf-parse usando require (más confiable para CommonJS modules)
+const require = createRequire(import.meta.url);
+let pdfParse;
+try {
+  pdfParse = require('pdf-parse');
+} catch (e) {
+  console.error('No se pudo cargar pdf-parse:', e.message);
+}
 
 /**
  * Extrae texto de un archivo PDF
@@ -13,11 +23,8 @@ import fs from 'fs';
  */
 export async function extraerTextoPDF(rutaArchivo) {
   try {
-    // Intentar importación dinámica
-    const pdfParse = (await import('pdf-parse')).default;
-    
-    if (typeof pdfParse !== 'function') {
-      throw new Error('pdf-parse no se cargó correctamente');
+    if (!pdfParse || typeof pdfParse !== 'function') {
+      throw new Error('pdf-parse no está disponible');
     }
     
     const dataBuffer = fs.readFileSync(rutaArchivo);
@@ -31,10 +38,8 @@ export async function extraerTextoPDF(rutaArchivo) {
   } catch (error) {
     console.error('Error extrayendo texto de PDF:', error.message);
     
-    // Si el PDF no tiene texto, intentar OCR sobre el PDF como imagen
-    if (error.message === 'PDF_SIN_TEXTO' || error.message.includes('pdf-parse')) {
-      console.log('PDF sin texto extraíble, intentando OCR...');
-      // Para PDFs escaneados, sugerir convertir a imagen
+    // Si el PDF no tiene texto, es probable que sea escaneado
+    if (error.message === 'PDF_SIN_TEXTO') {
       throw new Error('PDF_ESCANADO');
     }
     
@@ -81,6 +86,8 @@ export async function extraerTextoImagen(rutaArchivo) {
 export async function extraerTextoDocumento(rutaArchivo, nombreArchivo) {
   const extension = nombreArchivo.toLowerCase().split('.').pop();
   
+  console.log(`[OCR] Procesando archivo: ${nombreArchivo}, extensión detectada: ${extension}`);
+  
   if (extension === 'pdf') {
     try {
       const texto = await extraerTextoPDF(rutaArchivo);
@@ -95,6 +102,7 @@ export async function extraerTextoDocumento(rutaArchivo, nombreArchivo) {
   }
   
   if (['jpg', 'jpeg', 'png', 'bmp', 'tiff'].includes(extension)) {
+    console.log(`[OCR] Usando Tesseract para imagen ${extension}`);
     return await extraerTextoImagen(rutaArchivo);
   }
   
