@@ -4,6 +4,55 @@ Registro de cambios y actualizaciones del sistema.
 
 ---
 
+## 🎯 v1.4.3 (26 de Noviembre 2025) - Patrones Avanzados
+
+### ✨ MEJORAS EN EXTRACCIÓN DE CAMPOS
+
+#### **Nuevos patrones para formatos ARL/EPS específicos**
+
+**1. Nombre - Patrón "Cotizante"**
+```
+✅ Ahora reconoce: "Cotizante C 1092358605 NAVAS DELGADO NOLBERTO"
+```
+- Patrón 4 agregado: Captura nombre después de "Cotizante/Afiliado + Letra + Documento"
+- Común en certificados de ARL y algunas EPS
+
+**2. Documento - Patrón "Cotizante"**
+```
+✅ Ahora reconoce: "Cotizante C 1092358605"
+```
+- Patrón 5 agregado: Extrae documento del formato "Cotizante [LETRA] [DOCUMENTO]"
+- Priorizado para evitar falsos positivos
+
+**3. Radicado/Incapacidad - Patrones numéricos**
+```
+✅ Ahora reconoce: 
+   • "Nro. Incapacidad 00010593256"
+   • "No. De autorización 229385"
+   • "Nro. Certificado 123456789"
+```
+- Patrón 2 agregado: Soporta "Nro.", "No.", con/sin "de"
+- Patrón 3 agregado: Variaciones con "N°", "Núm.", etc.
+- Captura números de 6-15 dígitos
+
+### 📊 Patrones Totales por Campo
+
+| Campo | Patrones | Ejemplos Reconocidos |
+|-------|----------|---------------------|
+| **Nombre** | 4 | "Nombre: Juan", "Nombres y Apellidos:", "Cotizante C 123 JUAN PEREZ" |
+| **Documento** | 5 | "CC: 123", "Documento: 123", "Cotizante C 123456789" |
+| **Radicado** | 3 | "RADICADO: RAD-001", "Nro. Incapacidad 123456", "No. autorización 999" |
+
+### 🧪 Tests Agregados
+- `tools/test-regex-patterns.js` - Validación de nuevos patrones
+- ✅ 100% de patrones probados y funcionando
+
+### 📁 Archivos Modificados
+- `src/services/documentAnalyzer.js` - 3 nuevos patrones regex
+- `tools/test-regex-patterns.js` - Suite de pruebas
+
+---
+
 ## 🔧 v1.4.2 (26 de Noviembre 2025) - HOTFIX PDF
 
 ### 🐛 CORRECCIÓN CRÍTICA

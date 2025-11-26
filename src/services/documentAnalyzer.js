@@ -180,12 +180,17 @@ function extraerCampos(texto, tipo) {
   // Patrón 3: Línea que empieza con nombre (después de encabezados)
   const regexNombre3 = /(?:Datos\s+del\s+Paciente|Información\s+Personal)[\s\S]{0,100}?\n\s*([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){0,3})\s*(?:\n|CC)/i;
   
+  // Patrón 4: "Cotizante C 1234567890 APELLIDO1 APELLIDO2 NOMBRE" (formato ARL/EPS específico)
+  const regexNombre4 = /(?:Cotizante|Afiliado|Trabajador|Empleado)\s+[A-Z]\s+\d{6,11}\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñA-ZÁÉÍÓÚÑ\s]{10,60})(?=\s*(?:\n|Tipo|Diagnóstico|Fecha|EPS|ARL))/i;
+  
   const matchNombre1 = texto.match(regexNombre1);
   const matchNombre2 = texto.match(regexNombre2);
   const matchNombre3 = texto.match(regexNombre3);
+  const matchNombre4 = texto.match(regexNombre4);
   
   if (matchNombre1) nombre = matchNombre1[1].trim();
   else if (matchNombre2) nombre = matchNombre2[1].trim();
+  else if (matchNombre4) nombre = matchNombre4[1].trim();
   else if (matchNombre3) nombre = matchNombre3[1].trim();
   
   // Validar y limpiar nombre
@@ -214,12 +219,17 @@ function extraerCampos(texto, tipo) {
   // Patrón 4: Número aislado de 7-10 dígitos después de "CC" en la misma línea del nombre
   const regexDoc4 = /(?:PACIENTE|AFILIADO|NOMBRE)[\s\S]{0,80}?CC[:.\s]*(\d{7,10})(?=\s|\n)/i;
   
+  // Patrón 5: "Cotizante C 1234567890" (formato ARL/EPS con letra de tipo)
+  const regexDoc5 = /(?:Cotizante|Afiliado|Trabajador|Empleado)\s+[A-Z]\s+(\d{6,11})(?=\s)/i;
+  
   const matchDoc1 = texto.match(regexDoc1);
   const matchDoc2 = texto.match(regexDoc2);
   const matchDoc3 = texto.match(regexDoc3);
   const matchDoc4 = texto.match(regexDoc4);
+  const matchDoc5 = texto.match(regexDoc5);
   
-  if (matchDoc1) documento = matchDoc1[1];
+  if (matchDoc5) documento = matchDoc5[1]; // Priorizar formato "Cotizante C 123456"
+  else if (matchDoc1) documento = matchDoc1[1];
   else if (matchDoc2) documento = matchDoc2[1];
   else if (matchDoc3) documento = matchDoc3[1];
   else if (matchDoc4) documento = matchDoc4[1];
@@ -265,10 +275,24 @@ function extraerCampos(texto, tipo) {
   }
   
   // 5. NÚMERO DE RADICADO / INCAPACIDAD - MEJORADO: Patrones variables
-  // Captura: RAD-2025-001234, EPS-001234, ARL2025001234, etc.
-  const regexRadicado = /(?:RADICADO|INCAPACIDAD|CERTIFICADO|N(?:o|°|º)?\.?\s*(?:RADICADO|INCAPACIDAD|CERTIFICADO)?)[:.\s]*([A-Z]{2,5}[-\s]?\d{4,10}|[A-Z0-9\-]{8,20})/i;
-  const matchRadicado = texto.match(regexRadicado);
-  const numero_radicado = matchRadicado?.[1];
+  let numero_radicado = null;
+  
+  // Patrón 1: "RADICADO: RAD-2025-001234" o "INCAPACIDAD: EPS-001234"
+  const regexRadicado1 = /(?:RADICADO|INCAPACIDAD|CERTIFICADO)[:.\s]*([A-Z]{2,5}[-\s]?\d{4,10}|[A-Z0-9\-]{8,20})/i;
+  
+  // Patrón 2: "Nro. Incapacidad 00010593256" o "No. De autorización 229385"
+  const regexRadicado2 = /(?:Nro?\.?\s+(?:de\s+)?(?:Incapacidad|incapacidad|Autorización|autorización|Certificado|certificado)|No?\.?\s+(?:de\s+)?(?:Autorización|autorización|Incapacidad|incapacidad))[:.\s]*(\d{6,15})/i;
+  
+  // Patrón 3: "N°. RADICADO: 123456"
+  const regexRadicado3 = /N(?:o|°|º|ú|u|úm|um)\.?\s*(?:de\s+)?(?:RADICADO|INCAPACIDAD|CERTIFICADO|AUTORIZACIÓN)[:.\s]*(\d{6,15})/i;
+  
+  const matchRadicado1 = texto.match(regexRadicado1);
+  const matchRadicado2 = texto.match(regexRadicado2);
+  const matchRadicado3 = texto.match(regexRadicado3);
+  
+  if (matchRadicado2) numero_radicado = matchRadicado2[1]; // Priorizar "Nro. Incapacidad"
+  else if (matchRadicado3) numero_radicado = matchRadicado3[1];
+  else if (matchRadicado1) numero_radicado = matchRadicado1[1];
   
   // 6. DÍAS DE INCAPACIDAD - MEJORADO: Más variaciones
   // Captura: "Días: 5", "Días de incapacidad: 5", "Duración: 5 días", etc.
