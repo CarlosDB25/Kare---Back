@@ -53,7 +53,12 @@ export async function extraerTextoImagen(rutaArchivo) {
       rutaArchivo,
       'spa', // Idioma español
       {
-        langPath: './spa.traineddata', // Ruta al archivo de idioma
+        logger: m => {
+          // Log del progreso (opcional)
+          if (m.status === 'recognizing text') {
+            console.log(`OCR progreso: ${Math.round(m.progress * 100)}%`);
+          }
+        }
       }
     );
     
@@ -62,8 +67,8 @@ export async function extraerTextoImagen(rutaArchivo) {
       confianza: Math.round(confidence)
     };
   } catch (error) {
-    console.error('Error en OCR de imagen:', error);
-    throw new Error('No se pudo procesar la imagen. Intente con mejor calidad o iluminación.');
+    console.error('Error en OCR de imagen:', error.message);
+    throw new Error('No se pudo procesar la imagen. Verifique que sea un formato válido (JPG, PNG) y que tenga texto legible.');
   }
 }
 
@@ -81,10 +86,9 @@ export async function extraerTextoDocumento(rutaArchivo, nombreArchivo) {
       const texto = await extraerTextoPDF(rutaArchivo);
       return { texto, confianza: 100 }; // PDF con texto tiene 100% confianza
     } catch (error) {
-      // Si el PDF está escaneado, intentar OCR como si fuera imagen
+      // Si el PDF está escaneado, NO intentar OCR directo (Tesseract no soporta PDF)
       if (error.message === 'PDF_ESCANADO') {
-        console.log('Intentando OCR en PDF escaneado...');
-        return await extraerTextoImagen(rutaArchivo);
+        throw new Error('El PDF no contiene texto extraíble (probablemente es una imagen escaneada). Por favor, convierta el documento a imagen JPG o PNG para usar OCR.');
       }
       throw error;
     }
@@ -94,5 +98,5 @@ export async function extraerTextoDocumento(rutaArchivo, nombreArchivo) {
     return await extraerTextoImagen(rutaArchivo);
   }
   
-  throw new Error(`Formato de archivo no soportado: ${extension}. Use PDF, JPG o PNG.`);
+  throw new Error(`Formato de archivo no soportado: ${extension}. Use PDF con texto seleccionable, o imágenes JPG/PNG.`);
 }
