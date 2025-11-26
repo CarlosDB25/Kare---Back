@@ -20,12 +20,19 @@ Registro de cambios y actualizaciones del sistema.
 - 📄 **OpenAPI JSON:** http://localhost:3000/api-docs.json
 
 **Características implementadas:**
-- ✅ Documentación completa de 30+ endpoints
-- ✅ Esquemas de datos (Incapacidad, Usuario, Notificación, etc.)
-- ✅ Ejemplos de request/response
+- ✅ Documentación completa de 36 endpoints (100% cobertura)
+- ✅ Esquemas de datos (Incapacidad, Usuario, Notificación, Conciliacion, Reemplazo)
+- ✅ Ejemplos de request/response para todos los módulos
 - ✅ Autenticación JWT integrada (botón "Authorize")
 - ✅ Pruebas interactivas desde el navegador
 - ✅ Descarga de especificación OpenAPI 3.0
+- ✅ Todos los módulos documentados:
+  - Autenticación (3 endpoints)
+  - Incapacidades (10 endpoints)
+  - Notificaciones (5 endpoints)
+  - Conciliaciones (5 endpoints)
+  - Reemplazos (9 endpoints)
+  - Usuarios (4 endpoints)
 
 **Cómo usar Swagger (solo desarrollo local):**
 1. Iniciar servidor: `npm run dev`

@@ -259,12 +259,22 @@ curl -X POST http://localhost:3000/api/auth/login \
 
 ### 🎯 Documentación Interactiva con Swagger UI
 
-**Para desarrolladores locales, el sistema incluye Swagger UI:**
+**Para desarrolladores locales, el sistema incluye Swagger UI con cobertura 100%:**
 
 Después de iniciar el servidor localmente (`npm run dev`), accede a:
 ```
 http://localhost:3000/api-docs
 ```
+
+**Módulos completamente documentados:**
+- ✅ **Autenticación** (3 endpoints)
+- ✅ **Incapacidades** (10 endpoints)
+- ✅ **Notificaciones** (5 endpoints)
+- ✅ **Conciliaciones** (5 endpoints)
+- ✅ **Reemplazos** (9 endpoints)
+- ✅ **Usuarios** (4 endpoints)
+
+**Total: 36/36 endpoints documentados (100%)**
 
 **Swagger UI te permite:**
 - ✅ Ver todos los endpoints disponibles organizados por categorías
