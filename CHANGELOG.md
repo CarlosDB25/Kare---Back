@@ -15,10 +15,9 @@ Registro de cambios y actualizaciones del sistema.
 - Interfaz web interactiva que permite probar endpoints sin Postman
 - Especificación OpenAPI 3.0 completa
 
-**URLs disponibles:**
-- 🌐 **Producción:** https://kare-back.onrender.com/api-docs
-- 💻 **Local:** http://localhost:3000/api-docs
-- 📄 **JSON:** http://localhost:3000/api-docs.json
+**URLs disponibles (desarrollo local):**
+- 💻 **Swagger UI:** http://localhost:3000/api-docs
+- 📄 **OpenAPI JSON:** http://localhost:3000/api-docs.json
 
 **Características implementadas:**
 - ✅ Documentación completa de 30+ endpoints
@@ -28,12 +27,15 @@ Registro de cambios y actualizaciones del sistema.
 - ✅ Pruebas interactivas desde el navegador
 - ✅ Descarga de especificación OpenAPI 3.0
 
-**Cómo usar Swagger:**
-1. Abrir https://kare-back.onrender.com/api-docs
-2. Click en "Authorize" (candado verde arriba a la derecha)
-3. Login en `/auth/login` para obtener token
-4. Pegar token en el modal de autorización con formato: `Bearer {token}`
-5. Probar cualquier endpoint directamente
+**Cómo usar Swagger (solo desarrollo local):**
+1. Iniciar servidor: `npm run dev`
+2. Abrir: http://localhost:3000/api-docs
+3. Click en "Authorize" (candado verde arriba a la derecha)
+4. Login en `/auth/login` para obtener token
+5. Pegar token en el modal con formato: `Bearer {token}`
+6. Probar cualquier endpoint directamente
+
+> **Nota de Seguridad:** Por razones de seguridad, Swagger UI no está habilitado en producción para evitar exposición de la estructura de la API y posibles ataques.
 
 **Beneficios para Frontend:**
 - ✅ No necesitas leer documentación markdown

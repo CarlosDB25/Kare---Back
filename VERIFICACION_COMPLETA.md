@@ -45,10 +45,12 @@
 
 | Recurso | URL Local | URL Producción |
 |---------|-----------|----------------|
-| **Swagger UI** | http://localhost:3000/api-docs | https://kare-back.onrender.com/api-docs |
-| **OpenAPI JSON** | http://localhost:3000/api-docs.json | https://kare-back.onrender.com/api-docs.json |
+| **Swagger UI** | http://localhost:3000/api-docs | ⚠️ Deshabilitado (seguridad) |
+| **OpenAPI JSON** | http://localhost:3000/api-docs.json | ⚠️ Deshabilitado (seguridad) |
 | **API Base** | http://localhost:3000/api | https://kare-back.onrender.com/api |
 | **Health Check** | http://localhost:3000/api/health | https://kare-back.onrender.com/api/health |
+
+> **Nota de Seguridad:** Swagger UI solo está disponible en entorno de desarrollo local para evitar exposición de la estructura de la API en producción.
 
 ### Endpoints Documentados en Swagger
 

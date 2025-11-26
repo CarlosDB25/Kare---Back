@@ -38,18 +38,12 @@ curl https://kare-back.onrender.com/api/usuarios \
 - 👥 **Usuarios de prueba:** 8 precargados
 - 🔐 **Autenticación:** JWT activa
 - 📦 **Base de datos:** SQLite persistente
-- 📚 **Documentación:** Swagger UI interactiva
 
 **🎯 Casos de uso:**
 - **Desarrolladores frontend:** Usar directamente sin clonar repositorio
 - **Pruebas rápidas:** Verificar endpoints sin configuración local
 - **Demos:** Mostrar funcionalidad en presentaciones
 - **Testing:** Suite de tests de producción validada
-
-**📖 Documentación Interactiva:**
-- 🚀 **Swagger UI (Producción):** [https://kare-back.onrender.com/api-docs](https://kare-back.onrender.com/api-docs)
-- 💻 **Swagger UI (Local):** `http://localhost:3000/api-docs` (después de iniciar el servidor)
-- 📄 **JSON OpenAPI:** `http://localhost:3000/api-docs.json`
 
 [👉 Ver todos los endpoints disponibles](#-api-endpoints)
 
@@ -263,21 +257,23 @@ curl -X POST http://localhost:3000/api/auth/login \
 
 ## 📡 API Endpoints
 
-### 🎯 Documentación Interactiva con Swagger
+### 🎯 Documentación Interactiva con Swagger UI
 
-**La forma más fácil de explorar la API es usando Swagger UI:**
+**Para desarrolladores locales, el sistema incluye Swagger UI:**
 
+Después de iniciar el servidor localmente (`npm run dev`), accede a:
 ```
-🌐 Producción: https://kare-back.onrender.com/api-docs
-💻 Local: http://localhost:3000/api-docs
+http://localhost:3000/api-docs
 ```
 
 **Swagger UI te permite:**
 - ✅ Ver todos los endpoints disponibles organizados por categorías
 - ✅ Probar cada endpoint directamente desde el navegador
-- ✅ Ver ejemplos de request/response
+- ✅ Ver ejemplos de request/response en tiempo real
 - ✅ Autenticarte con JWT fácilmente (botón "Authorize")
-- ✅ Descargar la especificación OpenAPI 3.0
+- ✅ Descargar la especificación OpenAPI 3.0 en formato JSON
+
+> **Nota:** Por seguridad, Swagger UI solo está disponible en entorno de desarrollo local.
 
 ---
 
