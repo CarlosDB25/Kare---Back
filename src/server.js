@@ -29,7 +29,7 @@ const corsOptions = {
   origin: [
     'http://localhost:5173',           // Vite dev
     'http://localhost:3000',           // Local alternativo
-    'https://kare-2am6.onrender.com'   // Frontend en producción
+    'https://kare-front.onrender.com'   // Frontend en producción
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
