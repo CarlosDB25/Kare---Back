@@ -11,24 +11,26 @@ async function cargarPdfParse() {
   if (pdfParse !== null) return pdfParse;
   
   try {
-    // Intento 1: import dinámico estándar
-    const module = await import('pdf-parse');
-    pdfParse = module.default || module;
-    console.log('[PDF-Parse] Cargado exitosamente');
-    return pdfParse;
-  } catch (e1) {
-    try {
-      // Intento 2: require tradicional
-      const { createRequire } = await import('module');
-      const require = createRequire(import.meta.url);
-      pdfParse = require('pdf-parse');
-      console.log('[PDF-Parse] Cargado con require');
-      return pdfParse;
-    } catch (e2) {
-      console.error('[PDF-Parse] Error de carga:', e1.message, e2.message);
+    // pdf-parse v2+ exporta como named export "PDFParse"
+    const { createRequire } = await import('module');
+    const require = createRequire(import.meta.url);
+    const module = require('pdf-parse');
+    
+    // La función de parsing está en module.PDFParse
+    pdfParse = module.PDFParse;
+    
+    if (typeof pdfParse !== 'function') {
+      console.error('[PDF-Parse] PDFParse no es función. Disponibles:', Object.keys(module));
       pdfParse = false;
       return false;
     }
+    
+    console.log('[PDF-Parse] ✓ Cargado exitosamente (PDFParse)');
+    return pdfParse;
+  } catch (error) {
+    console.error('[PDF-Parse] Error de carga:', error.message);
+    pdfParse = false;
+    return false;
   }
 }
 
@@ -41,20 +43,28 @@ async function cargarPdfParse() {
  */
 export async function extraerTextoPDF(rutaArchivo) {
   try {
-    const parser = await cargarPdfParse();
+    const PDFParseClass = await cargarPdfParse();
     
-    if (!parser) {
+    if (!PDFParseClass) {
       throw new Error('PDF_PARSER_NO_DISPONIBLE');
     }
     
     const dataBuffer = fs.readFileSync(rutaArchivo);
-    const data = await parser(dataBuffer);
+    console.log(`[PDF-Parse] Procesando archivo de ${dataBuffer.length} bytes`);
     
-    if (!data || !data.text || data.text.trim().length < 10) {
+    // pdf-parse v2+ usa una clase: new PDFParse({data: buffer})
+    const parser = new PDFParseClass({ data: dataBuffer });
+    const result = await parser.getText();
+    
+    // Destruir el parser para liberar recursos
+    await parser.destroy();
+    
+    if (!result || !result.text || result.text.trim().length < 10) {
       throw new Error('PDF_SIN_TEXTO');
     }
     
-    return data.text;
+    console.log(`[PDF-Parse] ✓ Texto extraído: ${result.text.length} caracteres`);
+    return result.text;
   } catch (error) {
     console.error('Error extrayendo texto de PDF:', error.message);
     

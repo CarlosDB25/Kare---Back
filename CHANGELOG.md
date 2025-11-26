@@ -4,6 +4,41 @@ Registro de cambios y actualizaciones del sistema.
 
 ---
 
+## 🔧 v1.4.2 (26 de Noviembre 2025) - HOTFIX PDF
+
+### 🐛 CORRECCIÓN CRÍTICA
+
+#### **Uso correcto de pdf-parse v2.4.5**
+- ❌ **Error anterior**: `parser is not a function` en producción
+- ✅ **Solución**: Actualizado para usar la API correcta de `pdf-parse` v2+
+  
+**Cambios técnicos:**
+```javascript
+// ❌ ANTES (incorrecto para v2+)
+const pdfParse = require('pdf-parse');
+const data = await pdfParse(buffer);
+
+// ✅ AHORA (correcto para v2+)
+const { PDFParse } = require('pdf-parse');
+const parser = new PDFParse({ data: buffer });
+const result = await parser.getText();
+await parser.destroy(); // Liberar recursos
+```
+
+**Resultado**: PDFs ahora se procesan correctamente tanto en desarrollo como en producción.
+
+### 📁 Archivos modificados
+- `src/services/ocrService.js` - Uso correcto de la clase PDFParse
+- `tools/test-pdf-parse.js` - Script de diagnóstico
+- `tools/test-pdf-real.js` - Test con archivo PDF real
+
+### ✅ Probado
+- ✓ PDF de 445KB procesado exitosamente
+- ✓ 951 caracteres extraídos correctamente
+- ✓ Sin errores en consola
+
+---
+
 ## 🔧 v1.4.1 (26 de Noviembre 2025)
 
 ### 🐛 CORRECCIONES CRÍTICAS
