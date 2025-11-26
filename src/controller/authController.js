@@ -66,7 +66,7 @@ export const AuthController = {
           console.log(`[REGISTRO] Creando notificación para ${gh.nombre} (ID: ${gh.id})`);
           await NotificacionModel.crear({
             usuario_id: gh.id,
-            tipo: 'registro',
+            tipo: 'info',
             titulo: 'Nuevo usuario registrado',
             mensaje: `${nombre} se ha registrado como ${rol}. Por favor, complete los datos faltantes (salario, IBC, área, cargo).`,
             incapacidad_id: null
